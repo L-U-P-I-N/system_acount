@@ -252,6 +252,30 @@ body {
     margin-bottom: 20px;
 }
 
+/* ==================== ترويسة الصفحة ==================== */
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.page-title {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 800;
+    color: var(--dark);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.page-title i {
+    color: var(--primary);
+}
+
 .card-header {
     background: white;
     border-bottom: 1px solid var(--border-color);
@@ -295,6 +319,19 @@ body {
     font-size: 13px;
     padding: 8px 20px;
     transition: all 0.2s ease;
+}
+
+.btn-gradient {
+    background: linear-gradient(45deg, #667eea, #764ba2);
+    border: none;
+    color: white;
+    font-weight: 600;
+}
+
+.btn-gradient:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+    color: white;
 }
 
 .btn-primary {
@@ -515,11 +552,132 @@ body {
     font-weight: 400;
 }
 
-/* ==================== الرسوم البيانية ==================== */
+/* ==================== الرسوم البيانية والنشاطات ==================== */
 .chart-container {
+    background: white;
+    padding: 20px;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    height: 400px;
+    display: flex;
+    flex-direction: column;
+}
+
+.chart-wrapper {
+    flex: 1;
     position: relative;
-    height: 300px;
-    padding: 10px;
+    min-height: 0;
+}
+
+.chart-wrapper canvas {
+    max-height: 100% !important;
+}
+
+.recent-activity {
+    background: white;
+    border-radius: var(--radius);
+    padding: 25px;
+    box-shadow: var(--shadow);
+}
+
+.activity-item {
+    padding: 15px;
+    border-bottom: 1px solid var(--border-color);
+    transition: background 0.3s ease;
+}
+
+.activity-item:hover {
+    background: #f8fafc;
+}
+
+.activity-item:last-child {
+    border-bottom: none;
+}
+
+/* ==================== القوائم والبطاقات (نظام موحد) ==================== */
+.list-card {
+    background: white;
+    border-radius: var(--radius);
+    padding: 20px;
+    box-shadow: var(--shadow);
+    margin-bottom: 20px;
+    transition: all 0.3s ease;
+}
+
+.list-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-lg);
+}
+
+.avatar-circle {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 18px;
+}
+
+.avatar-square {
+    width: 50px;
+    height: 50px;
+    border-radius: 10px;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+}
+
+.avatar-blue { background: linear-gradient(45deg, #667eea, #764ba2); }
+.avatar-green { background: linear-gradient(45deg, #28a745, #20c997); }
+.avatar-orange { background: linear-gradient(45deg, #ffc107, #fd7e14); }
+
+.search-box {
+    background: white;
+    border-radius: var(--radius);
+    padding: 15px;
+    margin-bottom: 20px;
+    box-shadow: var(--shadow);
+}
+
+.stock-badge {
+    padding: 5px 10px;
+    border-radius: 15px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.status-badge {
+    padding: 5px 15px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.filter-tabs {
+    background: white;
+    border-radius: var(--radius);
+    padding: 15px;
+    margin-bottom: 20px;
+    box-shadow: var(--shadow);
+}
+
+.filter-tabs .nav-link {
+    border: none;
+    color: var(--secondary);
+    padding: 10px 20px;
+    border-radius: 20px;
+    margin: 0 5px;
+    transition: all 0.3s ease;
+}
+
+.filter-tabs .nav-link.active {
+    background: linear-gradient(45deg, #667eea, #764ba2);
+    color: white;
 }
 
 /* ==================== طباعة ==================== */

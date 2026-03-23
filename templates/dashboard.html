@@ -2,104 +2,16 @@
 
 {% block title %}لوحة التحكم - {{ company.name }}{% endblock %}
 
-{% block extra_css %}
-<style>
-    .stat-card {
-        background: white;
-        border-radius: 15px;
-        padding: 25px;
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
-        transition: transform 0.3s ease;
-        border: none;
-    }
-
-    .stat-card:hover {
-        transform: translateY(-5px);
-    }
-
-    .stat-icon {
-        width: 60px;
-        height: 60px;
-        border-radius: 15px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 24px;
-        margin-bottom: 15px;
-    }
-
-    .stat-icon.revenue {
-        background: linear-gradient(45deg, #28a745, #20c997);
-        color: white;
-    }
-
-    .stat-icon.expenses {
-        background: linear-gradient(45deg, #dc3545, #fd7e14);
-        color: white;
-    }
-
-    .stat-icon.customers {
-        background: linear-gradient(45deg, #007bff, #6610f2);
-        color: white;
-    }
-
-    .stat-icon.invoices {
-        background: linear-gradient(45deg, #ffc107, #fd7e14);
-        color: white;
-    }
-
-    .chart-container {
-        background: white;
-        padding: 20px;
-        border-radius: 10px;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        height: 400px;
-        display: flex;
-        flex-direction: column;
-    }
-
-    .chart-wrapper {
-        flex: 1;
-        position: relative;
-        min-height: 0;
-    }
-
-    .chart-wrapper canvas {
-        max-height: 100% !important;
-    }
-
-    .recent-activity {
-        background: white;
-        border-radius: 15px;
-        padding: 25px;
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
-    }
-
-    .activity-item {
-        padding: 15px;
-        border-bottom: 1px solid #f0f0f0;
-        transition: background 0.3s ease;
-    }
-
-    .activity-item:hover {
-        background: #f8f9fa;
-    }
-
-    .activity-item:last-child {
-        border-bottom: none;
-    }
-</style>
-{% endblock %}
 
 {% block content %}
 <!-- Header -->
-<div class="d-flex justify-content-between align-items-center mb-4">
+<div class="page-header">
     <div>
-        <h2>لوحة التحكم</h2>
-        <p class="text-muted">مرحباً {{ current_user.first_name }}، آخر تحديث: الآن</p>
+        <h2 class="page-title"><i class="fas fa-tachometer-alt"></i> لوحة التحكم</h2>
+        <p class="text-muted mt-2 mb-0">مرحباً {{ current_user.first_name }}، آخر تحديث: الآن</p>
     </div>
     <div>
-        <span class="badge bg-success">
+        <span class="badge bg-success py-2 px-3 fs-6">
             <i class="fas fa-check-circle ms-2"></i>
             {{ company.subscription_plan.title() }}
         </span>
@@ -110,38 +22,38 @@
 <div class="row mb-4">
     <div class="col-md-3">
         <div class="stat-card">
-            <div class="stat-icon revenue">
+            <div class="stat-icon green">
                 <i class="fas fa-arrow-up"></i>
             </div>
-            <h3>{{ "%.2f"|format(stats.total_revenue_month) }} {{ company.currency }}</h3>
-            <p class="text-muted mb-0">إجمالي الإيرادات هذا الشهر</p>
+            <div class="stat-value">{{ "%.2f"|format(stats.total_revenue_month) }} {{ company.currency }}</div>
+            <div class="stat-label">إجمالي الإيرادات هذا الشهر</div>
         </div>
     </div>
     <div class="col-md-3">
         <div class="stat-card">
-            <div class="stat-icon expenses">
+            <div class="stat-icon red">
                 <i class="fas fa-arrow-down"></i>
             </div>
-            <h3>{{ "%.2f"|format(stats.total_expenses_month) }} {{ company.currency }}</h3>
-            <p class="text-muted mb-0">إجمالي المصروفات هذا الشهر</p>
+            <div class="stat-value">{{ "%.2f"|format(stats.total_expenses_month) }} {{ company.currency }}</div>
+            <div class="stat-label">إجمالي المصروفات هذا الشهر</div>
         </div>
     </div>
     <div class="col-md-3">
         <div class="stat-card">
-            <div class="stat-icon customers">
+            <div class="stat-icon purple">
                 <i class="fas fa-users"></i>
             </div>
-            <h3>{{ stats.total_customers }}</h3>
-            <p class="text-muted mb-0">إجمالي العملاء</p>
+            <div class="stat-value">{{ stats.total_customers }}</div>
+            <div class="stat-label">إجمالي العملاء</div>
         </div>
     </div>
     <div class="col-md-3">
         <div class="stat-card">
-            <div class="stat-icon invoices">
+            <div class="stat-icon orange">
                 <i class="fas fa-file-invoice"></i>
             </div>
-            <h3>{{ stats.total_invoices_month }}</h3>
-            <p class="text-muted mb-0">الفواتير هذا الشهر</p>
+            <div class="stat-value">{{ stats.total_invoices_month }}</div>
+            <div class="stat-label">الفواتير هذا الشهر</div>
         </div>
     </div>
 </div>

@@ -2,69 +2,16 @@
 
 {% block title %}العملاء{% endblock %}
 
-{% block extra_css %}
-<style>
-    .customer-card {
-        background: white;
-        border-radius: 15px;
-        padding: 20px;
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
-        margin-bottom: 20px;
-        transition: transform 0.3s ease;
-    }
-
-    .customer-card:hover {
-        transform: translateY(-3px);
-    }
-
-    .btn-add {
-        background: linear-gradient(45deg, #667eea, #764ba2);
-        border: none;
-        border-radius: 25px;
-        padding: 10px 25px;
-        color: white;
-        font-weight: bold;
-        transition: all 0.3s ease;
-    }
-
-    .btn-add:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
-    }
-
-    .customer-avatar {
-        width: 50px;
-        height: 50px;
-        border-radius: 50%;
-        background: linear-gradient(45deg, #667eea, #764ba2);
-        color: white;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: bold;
-        font-size: 18px;
-    }
-
-    .search-box {
-        background: white;
-        border-radius: 15px;
-        padding: 15px;
-        margin-bottom: 20px;
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
-    }
-</style>
-{% endblock %}
 
 {% block content %}
 <!-- Header -->
-<div class="d-flex justify-content-between align-items-center mb-4">
+<div class="page-header">
     <div>
-        <h2>العملاء</h2>
-        <p class="text-muted">إدارة قائمة العملاء</p>
+        <h2 class="page-title"><i class="fas fa-users"></i> العملاء</h2>
+        <p class="text-muted mt-2 mb-0">إدارة قائمة العملاء</p>
     </div>
-    <button class="btn btn-add" data-bs-toggle="modal" data-bs-target="#addCustomerModal">
-        <i class="fas fa-plus ms-2"></i>
-        إضافة عميل جديد
+    <button class="btn btn-gradient" data-bs-toggle="modal" data-bs-target="#addCustomerModal">
+        <i class="fas fa-plus ms-1"></i> إضافة عميل جديد
     </button>
 </div>
 
@@ -92,15 +39,15 @@
 <!-- Customers List -->
 {% if customers %}
 {% for customer in customers %}
-<div class="customer-card">
+<div class="list-card customer-card">
     <div class="row align-items-center">
         <div class="col-md-1">
-            <div class="customer-avatar">
+            <div class="avatar-circle avatar-blue">
                 {{ customer.name[0] if customer.name else 'C' }}
             </div>
         </div>
         <div class="col-md-3">
-            <h5 class="mb-1">{{ customer.name }}</h5>
+            <h5 class="mb-1 fw-bold">{{ customer.name }}</h5>
             <small class="text-muted">{{ customer.code }}</small>
         </div>
         <div class="col-md-3">
@@ -116,7 +63,7 @@
         <div class="col-md-3">
             <div class="mb-1">
                 <strong>الرصيد:</strong>
-                <span class="{{ 'text-success' if customer.balance >= 0 else 'text-danger' }}">
+                <span class="{{ 'text-success fw-bold' if customer.balance >= 0 else 'text-danger fw-bold' }}">
                     {{ "%.2f"|format(customer.balance) }} {{ company.currency }}
                 </span>
             </div>
@@ -125,15 +72,15 @@
                 {{ "%.2f"|format(customer.credit_limit) }} {{ company.currency }}
             </div>
         </div>
-        <div class="col-md-2">
-            <span class="badge bg-{{ 'success' if customer.is_active else 'secondary' }}">
+        <div class="col-md-2 text-start">
+            <span class="badge bg-{{ 'success' if customer.is_active else 'secondary' }} mb-2 d-inline-block">
                 {{ 'نشط' if customer.is_active else 'غير نشط' }}
             </span>
-            <div class="mt-2">
-                <button class="btn btn-sm btn-outline-primary">
+            <div>
+                <button class="btn btn-sm btn-outline-primary shadow-sm">
                     <i class="fas fa-edit"></i>
                 </button>
-                <button class="btn btn-sm btn-outline-danger">
+                <button class="btn btn-sm btn-outline-danger shadow-sm ms-1">
                     <i class="fas fa-trash"></i>
                 </button>
             </div>
@@ -146,8 +93,8 @@
     <i class="fas fa-users fa-4x text-muted mb-3"></i>
     <h4 class="text-muted">لا يوجد عملاء</h4>
     <p class="text-muted">ابدأ بإضافة أول عميل</p>
-    <button class="btn btn-add" data-bs-toggle="modal" data-bs-target="#addCustomerModal">
-        <i class="fas fa-plus ms-2"></i>
+    <button class="btn btn-gradient" data-bs-toggle="modal" data-bs-target="#addCustomerModal">
+        <i class="fas fa-plus ms-1"></i>
         إضافة أول عميل
     </button>
 </div>

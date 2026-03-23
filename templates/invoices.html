@@ -2,77 +2,16 @@
 
 {% block title %}الفواتير{% endblock %}
 
-{% block extra_css %}
-<style>
-    .invoice-card {
-        background: white;
-        border-radius: 15px;
-        padding: 20px;
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
-        margin-bottom: 20px;
-        transition: transform 0.3s ease;
-    }
-
-    .invoice-card:hover {
-        transform: translateY(-3px);
-    }
-
-    .status-badge {
-        padding: 5px 15px;
-        border-radius: 20px;
-        font-size: 12px;
-        font-weight: bold;
-    }
-
-    .btn-add {
-        background: linear-gradient(45deg, #667eea, #764ba2);
-        border: none;
-        border-radius: 25px;
-        padding: 10px 25px;
-        color: white;
-        font-weight: bold;
-        transition: all 0.3s ease;
-    }
-
-    .btn-add:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
-    }
-
-    .filter-tabs {
-        background: white;
-        border-radius: 15px;
-        padding: 15px;
-        margin-bottom: 20px;
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
-    }
-
-    .filter-tabs .nav-link {
-        border: none;
-        color: #666;
-        padding: 10px 20px;
-        border-radius: 20px;
-        margin: 0 5px;
-        transition: all 0.3s ease;
-    }
-
-    .filter-tabs .nav-link.active {
-        background: linear-gradient(45deg, #667eea, #764ba2);
-        color: white;
-    }
-</style>
-{% endblock %}
 
 {% block content %}
 <!-- Header -->
-<div class="d-flex justify-content-between align-items-center mb-4">
+<div class="page-header">
     <div>
-        <h2>الفواتير</h2>
-        <p class="text-muted">إدارة فواتير المبيعات</p>
+        <h2 class="page-title"><i class="fas fa-file-invoice"></i> الفواتير</h2>
+        <p class="text-muted mt-2 mb-0">إدارة فواتير المبيعات</p>
     </div>
-    <a href="{{ url_for('add_invoice') }}" class="btn btn-add">
-        <i class="fas fa-plus ms-2"></i>
-        إنشاء فاتورة جديدة
+    <a href="{{ url_for('add_invoice') }}" class="btn btn-gradient">
+        <i class="fas fa-plus ms-1"></i> إنشاء فاتورة جديدة
     </a>
 </div>
 
@@ -119,19 +58,19 @@
 <!-- Invoices List -->
 {% if invoices %}
 {% for invoice in invoices %}
-<div class="invoice-card">
+<div class="list-card invoice-card">
     <div class="row align-items-center">
         <div class="col-md-3">
-            <h5 class="mb-1">{{ invoice.invoice_number }}</h5>
+            <h5 class="mb-1 fw-bold">{{ invoice.invoice_number }}</h5>
             <small class="text-muted">{{ invoice.invoice_date.strftime('%Y-%m-%d') }}</small>
         </div>
         <div class="col-md-3">
-            <strong>{{ invoice.customer.name }}</strong>
+            <strong class="text-dark">{{ invoice.customer.name }}</strong>
             <br>
-            <small class="text-muted">{{ invoice.customer.email or 'لا يوجد بريد' }}</small>
+            <small class="text-muted"><i class="fas fa-envelope ms-1"></i>{{ invoice.customer.email or 'لا يوجد بريد' }}</small>
         </div>
         <div class="col-md-2">
-            <h4 class="mb-1">{{ "%.2f"|format(invoice.total) }} {{ invoice.currency }}</h4>
+            <h5 class="mb-1 text-primary fw-bold">{{ "%.2f"|format(invoice.total) }} {{ invoice.currency }}</h5>
             <small class="text-muted">المبلغ الإجمالي</small>
         </div>
         <div class="col-md-2">
@@ -150,14 +89,14 @@
                 }}
             </span>
         </div>
-        <div class="col-md-2">
+        <div class="col-md-2 text-start">
             <div class="btn-group">
-                <a href="{{ url_for('view_invoice', id=invoice.id) }}" class="btn btn-sm btn-outline-primary">
+                <a href="{{ url_for('view_invoice', id=invoice.id) }}" class="btn btn-sm btn-outline-primary shadow-sm" title="عرض">
                     <i class="fas fa-eye"></i>
                 </a>
                 {% if invoice.status == 'draft' %}
-                <form method="POST" action="{{ url_for('approve_invoice', id=invoice.id) }}" class="d-inline">
-                    <button type="submit" class="btn btn-sm btn-outline-success">
+                <form method="POST" action="{{ url_for('approve_invoice', id=invoice.id) }}" class="d-inline ms-1">
+                    <button type="submit" class="btn btn-sm btn-outline-success shadow-sm" title="اعتماد">
                         <i class="fas fa-check"></i>
                     </button>
                 </form>
@@ -172,9 +111,8 @@
     <i class="fas fa-file-invoice fa-4x text-muted mb-3"></i>
     <h4 class="text-muted">لا توجد فواتير</h4>
     <p class="text-muted">ابدأ بإنشاء فاتورة جديدة</p>
-    <a href="{{ url_for('add_invoice') }}" class="btn btn-add">
-        <i class="fas fa-plus ms-2"></i>
-        إنشاء أول فاتورة
+    <a href="{{ url_for('add_invoice') }}" class="btn btn-gradient">
+        <i class="fas fa-plus ms-1"></i> إنشاء أول فاتورة
     </a>
 </div>
 {% endif %}

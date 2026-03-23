@@ -4,22 +4,18 @@
 
 {% block content %}
 <div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2><i class="fas fa-shopping-cart ms-2"></i>المشتريات</h2>
-                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addPurchaseModal">
-                    <i class="fas fa-plus ms-2"></i>إنشاء طلب شراء
-                </button>
-            </div>
-        </div>
+    <div class="page-header">
+        <h2 class="page-title"><i class="fas fa-shopping-cart"></i> المشتريات</h2>
+        <button class="btn btn-gradient" data-bs-toggle="modal" data-bs-target="#addPurchaseModal">
+            <i class="fas fa-plus ms-1"></i> إنشاء طلب شراء
+        </button>
     </div>
 
     <!-- الفلاتر -->
     <div class="row mb-4">
         <div class="col-md-12">
-            <div class="card">
-                <div class="card-body">
+            <div class="list-card">
+                <div class="card-body p-0">
                     <form method="GET" class="row g-3">
                         <div class="col-md-3">
                             <label class="form-label">الحالة</label>
@@ -62,49 +58,52 @@
 
     <!-- الإحصائيات -->
     <div class="row mb-4">
-        <div class="col-md-3">
-            <div class="card bg-primary text-white">
-                <div class="card-body">
-                    <h5 class="card-title">إجمالي المشتريات</h5>
-                    <h3>{{ "{:,.2f}".format(purchases|sum(attribute='total')) }} {{ company.currency }}</h3>
+        <div class="col-md-3 mb-3 mb-md-0">
+            <div class="stat-card">
+                <div class="stat-icon blue">
+                    <i class="fas fa-shopping-cart"></i>
                 </div>
+                <div class="stat-value">{{ "{:,.2f}".format(purchases|sum(attribute='total')) }}</div>
+                <div class="stat-label">إجمالي المشتريات ({{ company.currency }})</div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3 mb-md-0">
+            <div class="stat-card">
+                <div class="stat-icon orange">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="stat-value">{{ purchases|selectattr('status', 'equalto', 'pending')|list|length }}</div>
+                <div class="stat-label">في الانتظار</div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3 mb-md-0">
+            <div class="stat-card">
+                <div class="stat-icon green">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="stat-value">{{ purchases|selectattr('status', 'equalto', 'paid')|list|length }}</div>
+                <div class="stat-label">مدفوع</div>
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card bg-warning text-white">
-                <div class="card-body">
-                    <h5 class="card-title">في الانتظار</h5>
-                    <h3>{{ purchases|selectattr('status', 'equalto', 'pending')|list|length }}</h3>
+            <div class="stat-card">
+                <div class="stat-icon red">
+                    <i class="fas fa-exclamation-circle"></i>
                 </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card bg-success text-white">
-                <div class="card-body">
-                    <h5 class="card-title">مدفوع</h5>
-                    <h3>{{ purchases|selectattr('status', 'equalto', 'paid')|list|length }}</h3>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card bg-danger text-white">
-                <div class="card-body">
-                    <h5 class="card-title">الديون المستحقة</h5>
-                    <h3>{{ "{:,.2f}".format(purchases|selectattr('status', 'in', ['pending', 'approved', 'partial'])|list|sum(attribute='balance_due')) }} {{ company.currency }}</h3>
-                </div>
+                <div class="stat-value">{{ "{:,.2f}".format(purchases|selectattr('status', 'in', ['pending', 'approved', 'partial'])|list|sum(attribute='balance_due')) }}</div>
+                <div class="stat-label">الديون المستحقة ({{ company.currency }})</div>
             </div>
         </div>
     </div>
 
     <!-- قائمة المشتريات -->
-    <div class="card">
-        <div class="card-header">
+    <div class="recent-activity">
+        <div class="d-flex justify-content-between align-items-center mb-4">
             <h5 class="mb-0">قائمة المشتريات</h5>
         </div>
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-striped">
-                    <thead>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead>
                         <tr>
                             <th>رقم الطلب</th>
                             <th>المورد</th>
