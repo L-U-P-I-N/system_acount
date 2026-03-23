@@ -107,6 +107,18 @@
         border-right: 2px solid #e0e0e0;
         padding-right: 10px;
     }
+
+    .indent-0 { margin-right: 0px; }
+    .indent-1 { margin-right: 30px; }
+    .indent-2 { margin-right: 60px; }
+    .indent-3 { margin-right: 90px; }
+    .indent-4 { margin-right: 120px; }
+    .indent-5 { margin-right: 150px; }
+    .indent-6 { margin-right: 180px; }
+    .indent-7 { margin-right: 210px; }
+    .indent-8 { margin-right: 240px; }
+    .indent-9 { margin-right: 270px; }
+    .indent-10 { margin-right: 300px; }
 </style>
 {% endblock %}
 
@@ -171,7 +183,7 @@
     </h5>
 
     {% macro render_account(account, level=0) %}
-    <div class="tree-node" style="margin-right: {{ level * 30 }}px;">
+    <div class="tree-node indent-{{ level }}">
         <div class="account-item {{ 'parent' if account.children else '' }}">
             <div class="row align-items-center">
                 <div class="col-md-4">
