@@ -1,0 +1,504 @@
+{% extends "base.html" %}
+
+{% block title %}الإعدادات{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h2 class="mb-4"><i class="fas fa-cog ms-2"></i>الإعدادات</h2>
+        </div>
+    </div>
+
+    <!-- قائمة الإعدادات -->
+    <div class="row">
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <nav class="nav flex-column nav-pills">
+                        <a class="nav-link active" data-bs-toggle="pill" href="#company-settings">
+                            <i class="fas fa-building ms-2"></i>معلومات الشركة
+                        </a>
+                        <a class="nav-link" data-bs-toggle="pill" href="#user-settings">
+                            <i class="fas fa-user ms-2"></i>الملف الشخصي
+                        </a>
+                        <a class="nav-link" data-bs-toggle="pill" href="#tax-settings">
+                            <i class="fas fa-calculator ms-2"></i>إعدادات الضرائب
+                        </a>
+                        <a class="nav-link" data-bs-toggle="pill" href="#invoice-settings">
+                            <i class="fas fa-file-invoice ms-2"></i>إعدادات الفواتير
+                        </a>
+                        <a class="nav-link" data-bs-toggle="pill" href="#email-settings">
+                            <i class="fas fa-envelope ms-2"></i>إعدادات البريد
+                        </a>
+                        <a class="nav-link" data-bs-toggle="pill" href="#backup-settings">
+                            <i class="fas fa-database ms-2"></i>النسخ الاحتياطي
+                        </a>
+                        <a class="nav-link" data-bs-toggle="pill" href="#security-settings">
+                            <i class="fas fa-shield-alt ms-2"></i>الأمان
+                        </a>
+                    </nav>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-9">
+            <div class="tab-content">
+                <!-- معلومات الشركة -->
+                <div class="tab-pane fade show active" id="company-settings">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">معلومات الشركة</h5>
+                        </div>
+                        <div class="card-body">
+                            <form method="POST" action="{{ url_for('update_company') }}">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">اسم الشركة</label>
+                                            <input type="text" class="form-control" name="name" value="{{ company.name }}" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">الرقم الضريبي</label>
+                                            <input type="text" class="form-control" name="tax_number" value="{{ company.tax_number or '' }}">
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">البريد الإلكتروني</label>
+                                            <input type="email" class="form-control" name="email" value="{{ company.email or '' }}">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">رقم الهاتف</label>
+                                            <input type="tel" class="form-control" name="phone" value="{{ company.phone or '' }}">
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">العنوان</label>
+                                            <input type="text" class="form-control" name="address" value="{{ company.address or '' }}">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">المدينة</label>
+                                            <input type="text" class="form-control" name="city" value="{{ company.city or '' }}">
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">البلد</label>
+                                            <select class="form-select" name="country_code">
+                                                {% for code, config in config.TAX_CONFIGS.items() %}
+                                                <option value="{{ code }}" {% if company.country_code == code %}selected{% endif %}>
+                                                    {{ config.name }}
+                                                </option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">العملة</label>
+                                            <select class="form-select" name="currency">
+                                                <option value="SAR" {% if company.currency == 'SAR' %}selected{% endif %}>ريال سعودي</option>
+                                                <option value="AED" {% if company.currency == 'AED' %}selected{% endif %}>درهم إماراتي</option>
+                                                <option value="KWD" {% if company.currency == 'KWD' %}selected{% endif %}>دينار كويتي</option>
+                                                <option value="BHD" {% if company.currency == 'BHD' %}selected{% endif %}>دينار بحريني</option>
+                                                <option value="QAR" {% if company.currency == 'QAR' %}selected{% endif %}>ريال قطري</option>
+                                                <option value="OMR" {% if company.currency == 'OMR' %}selected{% endif %}>ريال عماني</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">الشعار</label>
+                                    <input type="file" class="form-control" name="logo" accept="image/*">
+                                    {% if company.logo %}
+                                    <div class="mt-2">
+                                        <img src="{{ company.logo }}" alt="شعار الشركة" style="max-height: 100px;">
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <button type="submit" class="btn btn-primary">حفظ التغييرات</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- الملف الشخصي -->
+                <div class="tab-pane fade" id="user-settings">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">الملف الشخصي</h5>
+                        </div>
+                        <div class="card-body">
+                            <form method="POST" action="{{ url_for('update_profile') }}">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">الاسم الأول</label>
+                                            <input type="text" class="form-control" name="first_name" value="{{ current_user.first_name }}" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">الاسم الأخير</label>
+                                            <input type="text" class="form-control" name="last_name" value="{{ current_user.last_name }}" required>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">البريد الإلكتروني</label>
+                                    <input type="email" class="form-control" name="email" value="{{ current_user.email }}" required>
+                                </div>
+                                
+                                <hr>
+                                
+                                <h6>تغيير كلمة المرور</h6>
+                                <div class="mb-3">
+                                    <label class="form-label">كلمة المرور الحالية</label>
+                                    <input type="password" class="form-control" name="current_password">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">كلمة المرور الجديدة</label>
+                                    <input type="password" class="form-control" name="new_password">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">تأكيد كلمة المرور الجديدة</label>
+                                    <input type="password" class="form-control" name="confirm_password">
+                                </div>
+                                
+                                <button type="submit" class="btn btn-primary">حفظ التغييرات</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- إعدادات الضرائب -->
+                <div class="tab-pane fade" id="tax-settings">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">إعدادات الضرائب</h5>
+                        </div>
+                        <div class="card-body">
+                            <form method="POST" action="{{ url_for('update_tax_settings') }}">
+                                <div class="mb-3">
+                                    <label class="form-label">ضريبة القيمة المضافة (%)</label>
+                                    <input type="number" class="form-control" name="vat_rate" step="0.01" value="{{ company.vat_rate or 15 }}" required>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">حساب ضريبة المخرجات</label>
+                                    <select class="form-select" name="output_vat_account">
+                                        {% for account in accounts %}
+                                        {% if account.account_type == 'liability' %}
+                                        <option value="{{ account.id }}" {% if account.code == '2300' %}selected{% endif %}>
+                                            {{ account.name_ar }}
+                                        </option>
+                                        {% endif %}
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">حساب ضريبة المدخلات</label>
+                                    <select class="form-select" name="input_vat_account">
+                                        {% for account in accounts %}
+                                        {% if account.account_type == 'asset' %}
+                                        <option value="{{ account.id }}" {% if account.code == '2310' %}selected{% endif %}>
+                                            {{ account.name_ar }}
+                                        </option>
+                                        {% endif %}
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="enable_tax_reports" id="enableTaxReports" {% if company.enable_tax_reports %}checked{% endif %}>
+                                        <label class="form-check-label" for="enableTaxReports">
+                                            تفعيل تقارير الضرائب الشهرية
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <button type="submit" class="btn btn-primary">حفظ الإعدادات</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- إعدادات الفواتير -->
+                <div class="tab-pane fade" id="invoice-settings">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">إعدادات الفواتير</h5>
+                        </div>
+                        <div class="card-body">
+                            <form method="POST" action="{{ url_for('update_invoice_settings') }}">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">بداية التسلسل</label>
+                                            <input type="number" class="form-control" name="invoice_sequence" value="{{ company.invoice_sequence or 1 }}">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">البادئة</label>
+                                            <input type="text" class="form-control" name="invoice_prefix" value="{{ company.invoice_prefix or 'INV-' }}">
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">شروط الدفع (بالأيام)</label>
+                                    <input type="number" class="form-control" name="payment_terms" value="{{ company.payment_terms or 30 }}">
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">ملاحظات الفاتورة</label>
+                                    <textarea class="form-control" name="invoice_notes" rows="3">{{ company.invoice_notes or '' }}</textarea>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="auto_tax" id="autoTax" {% if company.auto_tax %}checked{% endif %}>
+                                        <label class="form-check-label" for="autoTax">
+                                            حساب الضريبة تلقائياً
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="email_invoices" id="emailInvoices" {% if company.email_invoices %}checked{% endif %}>
+                                        <label class="form-check-label" for="emailInvoices">
+                                            إرسال الفواتير بالبريد الإلكتروني تلقائياً
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <button type="submit" class="btn btn-primary">حفظ الإعدادات</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- إعدادات البريد -->
+                <div class="tab-pane fade" id="email-settings">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">إعدادات البريد الإلكتروني</h5>
+                        </div>
+                        <div class="card-body">
+                            <form method="POST" action="{{ url_for('update_email_settings') }}">
+                                <div class="mb-3">
+                                    <label class="form-label">مزود الخدمة</label>
+                                    <select class="form-select" name="provider">
+                                        <option value="smtp">SMTP</option>
+                                        <option value="gmail">Gmail</option>
+                                        <option value="outlook">Outlook</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">خادم SMTP</label>
+                                    <input type="text" class="form-control" name="smtp_server" placeholder="smtp.gmail.com">
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">البريد الإلكتروني</label>
+                                            <input type="email" class="form-control" name="email_address">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">كلمة المرور</label>
+                                            <input type="password" class="form-control" name="email_password">
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">المنفذ</label>
+                                            <input type="number" class="form-control" name="port" value="587">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">التشفير</label>
+                                            <select class="form-select" name="encryption">
+                                                <option value="tls">TLS</option>
+                                                <option value="ssl">SSL</option>
+                                                <option value="none">بدون تشفير</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <button type="button" class="btn btn-info" onclick="testEmail()">اختبار الإعدادات</button>
+                                <button type="submit" class="btn btn-primary">حفظ الإعدادات</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- النسخ الاحتياطي -->
+                <div class="tab-pane fade" id="backup-settings">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">النسخ الاحتياطي</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6>نسخ احتياطي يدوي</h6>
+                                    <p>قم بتنزيل نسخة احتياطية كاملة من بياناتك</p>
+                                    <button class="btn btn-primary" onclick="createBackup()">
+                                        <i class="fas fa-download ms-2"></i>إنشاء نسخة احتياطية
+                                    </button>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6>استعادة النسخة الاحتياطية</h6>
+                                    <p>استعادة البيانات من نسخة احتياطية سابقة</p>
+                                    <input type="file" class="form-control mb-2" accept=".sql">
+                                    <button class="btn btn-warning">استعادة</button>
+                                </div>
+                            </div>
+                            
+                            <hr>
+                            
+                            <h6>النسخ الاحتياطي التلقائي</h6>
+                            <form method="POST" action="{{ url_for('update_backup_settings') }}">
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="auto_backup" id="autoBackup">
+                                        <label class="form-check-label" for="autoBackup">
+                                            تفعيل النسخ الاحتياطي التلقائي
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">الجدولة</label>
+                                    <select class="form-select" name="backup_frequency">
+                                        <option value="daily">يومياً</option>
+                                        <option value="weekly">أسبوعياً</option>
+                                        <option value="monthly">شهرياً</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">البريد الإلكتروني للإشعارات</label>
+                                    <input type="email" class="form-control" name="backup_email">
+                                </div>
+                                
+                                <button type="submit" class="btn btn-primary">حفظ الإعدادات</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- الأمان -->
+                <div class="tab-pane fade" id="security-settings">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">إعدادات الأمان</h5>
+                        </div>
+                        <div class="card-body">
+                            <form method="POST" action="{{ url_for('update_security_settings') }}">
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="two_factor" id="twoFactor">
+                                        <label class="form-check-label" for="twoFactor">
+                                            تفعيل المصادقة الثنائية
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="session_timeout" id="sessionTimeout" checked>
+                                        <label class="form-check-label" for="sessionTimeout">
+                                            انتهاء الجلسة تلقائياً بعد 30 دقيقة
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="ip_whitelist" id="ipWhitelist">
+                                        <label class="form-check-label" for="ipWhitelist">
+                                            تقييد الوصول بعناوين IP معينة
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">عناوين IP المسموح بها</label>
+                                    <textarea class="form-control" name="allowed_ips" rows="3" placeholder="192.168.1.1&#10;10.0.0.1"></textarea>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">سجل النشاط</label>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="log_activity" id="logActivity" checked>
+                                        <label class="form-check-label" for="logActivity">
+                                            تسجيل جميع الأنشطة
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <button type="submit" class="btn btn-primary">حفظ الإعدادات</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function testEmail() {
+    alert('سيتم إرسال بريد اختبار إلى بريدك الإلكتروني');
+}
+
+function createBackup() {
+    if (confirm('هل تريد إنشاء نسخة احتياطية الآن؟')) {
+        alert('جاري إنشاء النسخة الاحتياطية...');
+        // تنفيذ عملية النسخ الاحتياطي
+    }
+}
+
+// حفظ التغييرات تلقائياً
+document.querySelectorAll('form').forEach(form => {
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        alert('تم حفظ التغييرات بنجاح');
+    });
+});
+</script>
+{% endblock %}

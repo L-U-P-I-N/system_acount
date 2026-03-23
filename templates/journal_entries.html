@@ -1,0 +1,256 @@
+{% extends "base.html" %}
+
+{% block title %}القيود المحاسبية{% endblock %}
+
+{% block extra_css %}
+<style>
+    .journal-card {
+        background: white;
+        border-radius: 15px;
+        padding: 20px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+        margin-bottom: 20px;
+        transition: transform 0.3s ease;
+    }
+
+    .journal-card:hover {
+        transform: translateY(-3px);
+    }
+
+    .btn-add {
+        background: linear-gradient(45deg, #667eea, #764ba2);
+        border: none;
+        border-radius: 25px;
+        padding: 10px 25px;
+        color: white;
+        font-weight: bold;
+        transition: all 0.3s ease;
+    }
+
+    .btn-add:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    .status-badge {
+        padding: 5px 15px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: bold;
+    }
+
+    .draft {
+        background: #6c757d;
+        color: white;
+    }
+
+    .posted {
+        background: #28a745;
+        color: white;
+    }
+
+    .reversed {
+        background: #dc3545;
+        color: white;
+    }
+
+    .journal-line {
+        border-bottom: 1px solid #f0f0f0;
+        padding: 10px 0;
+    }
+
+    .journal-line:last-child {
+        border-bottom: none;
+    }
+
+    .debit {
+        color: #dc3545;
+        font-weight: bold;
+    }
+
+    .credit {
+        color: #28a745;
+        font-weight: bold;
+    }
+
+    .search-box {
+        background: white;
+        border-radius: 15px;
+        padding: 15px;
+        margin-bottom: 20px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2>القيود المحاسبية</h2>
+        <p class="text-muted">إدارة القيود اليومية</p>
+    </div>
+    <a href="{{ url_for('add_journal_entry') }}" class="btn btn-add">
+        <i class="fas fa-plus ms-2"></i>
+        إنشاء قيد جديد
+    </a>
+</div>
+
+<!-- Search Box -->
+<div class="search-box">
+    <div class="row">
+        <div class="col-md-4">
+            <div class="input-group">
+                <span class="input-group-text">
+                    <i class="fas fa-search"></i>
+                </span>
+                <input type="text" class="form-control" placeholder="البحث عن قيد..." id="searchInput">
+            </div>
+        </div>
+        <div class="col-md-3">
+            <select class="form-select">
+                <option>جميع القيود</option>
+                <option>مسودة</option>
+                <option>مرحلة</option>
+                <option>مستعادة</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <input type="date" class="form-control" placeholder="من تاريخ">
+        </div>
+        <div class="col-md-2">
+            <input type="date" class="form-control" placeholder="إلى تاريخ">
+        </div>
+    </div>
+</div>
+
+<!-- Journal Entries List -->
+{% if entries %}
+{% for entry in entries %}
+<div class="journal-card">
+    <div class="row align-items-center mb-3">
+        <div class="col-md-3">
+            <h5 class="mb-1">{{ entry.entry_number }}</h5>
+            <small class="text-muted">{{ entry.entry_date.strftime('%Y-%m-%d') }}</small>
+        </div>
+        <div class="col-md-4">
+            <strong>{{ entry.description or 'لا يوجد وصف' }}</strong>
+            {% if entry.reference %}
+            <br><small class="text-muted">المرجع: {{ entry.reference }}</small>
+            {% endif %}
+        </div>
+        <div class="col-md-2">
+            <span class="status-badge {{ entry.status }}">
+                {{
+                'مسودة' if entry.status == 'draft'
+                else 'مرحلة' if entry.status == 'posted'
+                else 'مستعادة'
+                }}
+            </span>
+        </div>
+        <div class="col-md-3">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="debit">{{ "%.2f"|format(entry.total_debit) }}</span>
+                    <span class="ms-2">|</span>
+                    <span class="credit ms-2">{{ "%.2f"|format(entry.total_credit) }}</span>
+                </div>
+                <div class="btn-group">
+                    <button class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                    {% if entry.status == 'draft' %}
+                    <form method="POST" action="{{ url_for('post_journal_entry', id=entry.id) }}" class="d-inline">
+                        <button type="submit" class="btn btn-sm btn-outline-success" title="ترحيل القيد">
+                            <i class="fas fa-check"></i>
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Journal Lines -->
+    <div class="journal-lines">
+        {% for line in entry.lines %}
+        <div class="journal-line">
+            <div class="row align-items-center">
+                <div class="col-md-4">
+                    <strong>{{ line.account.name }}</strong>
+                    <br><small class="text-muted">{{ line.account.code }}</small>
+                </div>
+                <div class="col-md-4">
+                    <small>{{ line.description or '' }}</small>
+                </div>
+                <div class="col-md-2">
+                    <span class="debit">{{ "%.2f"|format(line.debit) if line.debit > 0 else '-'
+                        }}</span>
+                </div>
+                <div class="col-md-2">
+                    <span class="credit">{{ "%.2f"|format(line.credit) if line.credit > 0 else '-'
+                        }}</span>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="row mt-3">
+        <div class="col-md-8">
+            <small class="text-muted">
+                النوع: {{
+                ('يدوي' if entry.entry_type == 'manual' else
+                'فاتورة' if entry.entry_type == 'invoice' else
+                'شراء' if entry.entry_type == 'purchase' else
+                'رواتب' if entry.entry_type == 'payroll' else
+                'تسوية')
+                }}
+                •
+                المنشئ: {{ entry.creator.full_name if entry.creator else 'نظام' }}
+                {% if entry.posted_at %}
+                • المرحل: {{ entry.poster.full_name if entry.poster else 'نظام' }} في {{
+                entry.posted_at.strftime('%Y-%m-%d %H:%M') }}
+                {% endif %}
+            </small>
+        </div>
+        <div class="col-md-4">
+            <div class="d-flex justify-content-end">
+                <small class="text-muted">
+                    الإجمالي:
+                    <span class="debit">{{ "%.2f"|format(entry.total_debit) }}</span>
+                    |
+                    <span class="credit">{{ "%.2f"|format(entry.total_credit) }}</span>
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% else %}
+<div class="text-center py-5">
+    <i class="fas fa-book fa-4x text-muted mb-3"></i>
+    <h4 class="text-muted">لا توجد قيود محاسبية</h4>
+    <p class="text-muted">ابدأ بإنشاء أول قيد محاسبي</p>
+    <a href="{{ url_for('add_journal_entry') }}" class="btn btn-add">
+        <i class="fas fa-plus ms-2"></i>
+        إنشاء أول قيد
+    </a>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Search functionality
+    document.getElementById('searchInput').addEventListener('keyup', function () {
+        const searchTerm = this.value.toLowerCase();
+        const cards = document.querySelectorAll('.journal-card');
+
+        cards.forEach(card => {
+            const text = card.textContent.toLowerCase();
+            card.style.display = text.includes(searchTerm) ? 'block' : 'none';
+        });
+    });
+</script>
+{% endblock %}

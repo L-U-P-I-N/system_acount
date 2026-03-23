@@ -1,0 +1,317 @@
+{% extends "base.html" %}
+
+{% block title %}شجرة الحسابات{% endblock %}
+
+{% block extra_css %}
+<style>
+    .account-tree {
+        background: white;
+        border-radius: 15px;
+        padding: 25px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+    }
+
+    .account-item {
+        border: 1px solid #e0e0e0;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 10px;
+        transition: all 0.3s ease;
+    }
+
+    .account-item:hover {
+        background: #f8f9fa;
+        transform: translateX(5px);
+    }
+
+    .account-item.parent {
+        background: linear-gradient(45deg, #f8f9fa, #e9ecef);
+        border-left: 4px solid #667eea;
+    }
+
+    .account-type-badge {
+        padding: 5px 15px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: bold;
+    }
+
+    .asset {
+        background: #28a745;
+        color: white;
+    }
+
+    .liability {
+        background: #dc3545;
+        color: white;
+    }
+
+    .equity {
+        background: #007bff;
+        color: white;
+    }
+
+    .revenue {
+        background: #20c997;
+        color: white;
+    }
+
+    .expense {
+        background: #fd7e14;
+        color: white;
+    }
+
+    .cogs {
+        background: #6f42c1;
+        color: white;
+    }
+
+    .btn-add {
+        background: linear-gradient(45deg, #667eea, #764ba2);
+        border: none;
+        border-radius: 25px;
+        padding: 10px 25px;
+        color: white;
+        font-weight: bold;
+        transition: all 0.3s ease;
+    }
+
+    .btn-add:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    .account-balance {
+        font-size: 18px;
+        font-weight: bold;
+    }
+
+    .positive {
+        color: #28a745;
+    }
+
+    .negative {
+        color: #dc3545;
+    }
+
+    .tree-view {
+        direction: ltr;
+    }
+
+    .tree-node {
+        margin: 5px 0;
+    }
+
+    .tree-children {
+        margin-right: 20px;
+        border-right: 2px solid #e0e0e0;
+        padding-right: 10px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2>شجرة الحسابات</h2>
+        <p class="text-muted">إدارة الحسابات المحاسبية</p>
+    </div>
+    <button class="btn btn-add" data-bs-toggle="modal" data-bs-target="#addAccountModal">
+        <i class="fas fa-plus ms-2"></i>
+        إضافة حساب جديد
+    </button>
+</div>
+
+<!-- Account Statistics -->
+<div class="row mb-4">
+    <div class="col-md-2">
+        <div class="text-center p-3 bg-white rounded">
+            <div class="account-type-badge asset mb-2">أصول</div>
+            <h4>{{ accounts|selectattr('account_type', 'equalto', 'asset')|list|length }}</h4>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="text-center p-3 bg-white rounded">
+            <div class="account-type-badge liability mb-2">خصوم</div>
+            <h4>{{ accounts|selectattr('account_type', 'equalto', 'liability')|list|length }}</h4>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="text-center p-3 bg-white rounded">
+            <div class="account-type-badge equity mb-2">ملكية</div>
+            <h4>{{ accounts|selectattr('account_type', 'equalto', 'equity')|list|length }}</h4>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="text-center p-3 bg-white rounded">
+            <div class="account-type-badge revenue mb-2">إيرادات</div>
+            <h4>{{ accounts|selectattr('account_type', 'equalto', 'revenue')|list|length }}</h4>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="text-center p-3 bg-white rounded">
+            <div class="account-type-badge expense mb-2">مصروفات</div>
+            <h4>{{ accounts|selectattr('account_type', 'equalto', 'expense')|list|length }}</h4>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="text-center p-3 bg-white rounded">
+            <div class="account-type-badge cogs mb-2">تكلفة</div>
+            <h4>{{ accounts|selectattr('account_type', 'equalto', 'cogs')|list|length }}</h4>
+        </div>
+    </div>
+</div>
+
+<!-- Accounts Tree -->
+<div class="account-tree">
+    <h5 class="mb-3">
+        <i class="fas fa-sitemap ms-2 text-primary"></i>
+        هيكل الحسابات
+    </h5>
+
+    {% macro render_account(account, level=0) %}
+    <div class="tree-node" style="margin-right: {{ level * 30 }}px;">
+        <div class="account-item {{ 'parent' if account.children else '' }}">
+            <div class="row align-items-center">
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center">
+                        {% if account.children %}
+                        <i class="fas fa-chevron-down ms-2 text-primary"></i>
+                        {% else %}
+                        <i class="fas fa-circle ms-2" style="font-size: 8px;"></i>
+                        {% endif %}
+                        <div>
+                            <strong>{{ account.name }}</strong>
+                            {% if account.name_ar %}
+                            <br><small class="text-muted">{{ account.name_ar }}</small>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <span class="account-type-badge {{ account.account_type }}">
+                        {{
+                        ('أصول' if account.account_type == 'asset' else
+                        'خصوم' if account.account_type == 'liability' else
+                        'ملكية' if account.account_type == 'equity' else
+                        'إيرادات' if account.account_type == 'revenue' else
+                        'مصروفات' if account.account_type == 'expense' else
+                        'تكلفة')
+                        }}
+                    </span>
+                </div>
+                <div class="col-md-2">
+                    <code>{{ account.code }}</code>
+                </div>
+                <div class="col-md-2">
+                    <div class="account-balance {{ 'positive' if account.balance >= 0 else 'negative' }}">
+                        {{ "%.2f"|format(account.balance) }} {{ company.currency }}
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="btn-group">
+                        <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal"
+                            data-bs-target="#editAccountModal{{ account.id }}">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        {% if not account.is_system %}
+                        <button class="btn btn-sm btn-outline-danger">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% if account.description %}
+            <div class="mt-2">
+                <small class="text-muted">{{ account.description }}</small>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if account.children %}
+    {% for child in account.children|sort(attribute='code') %}
+    {{ render_account(child, level + 1) }}
+    {% endfor %}
+    {% endif %}
+    {% endmacro %}
+
+    <!-- Render root level accounts -->
+    {% for account in accounts|selectattr('parent_id', 'equalto', none)|sort(attribute='code') %}
+    {{ render_account(account) }}
+    {% endfor %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Add Account Modal -->
+<div class="modal fade" id="addAccountModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">إضافة حساب جديد</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('add_account') }}">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label class="form-label">الكود *</label>
+                            <input type="text" name="code" class="form-control" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">الاسم *</label>
+                            <input type="text" name="name" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <label class="form-label">الاسم بالعربي</label>
+                            <input type="text" name="name_ar" class="form-control">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">نوع الحساب *</label>
+                            <select name="account_type" class="form-select" required>
+                                <option value="">اختر النوع</option>
+                                <option value="asset">أصل</option>
+                                <option value="liability">خصم</option>
+                                <option value="equity">حق ملكية</option>
+                                <option value="revenue">إيراد</option>
+                                <option value="expense">مصروف</option>
+                                <option value="cogs">تكلفة مباعة</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <label class="form-label">حساب أب</label>
+                            <select name="parent_id" class="form-select">
+                                <option value="">لا يوجد (حساب رئيسي)</option>
+                                {% for account in accounts %}
+                                <option value="{{ account.id }}">{{ account.code }} - {{ account.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">الرصيد الافتتاحي</label>
+                            <input type="number" name="balance" class="form-control" value="0" step="0.01">
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-md-12">
+                            <label class="form-label">الوصف</label>
+                            <textarea name="description" class="form-control" rows="3"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="submit" class="btn btn-primary">إضافة حساب</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,290 @@
+{% extends "base.html" %}
+
+{% block title %}المنتجات{% endblock %}
+
+{% block extra_css %}
+<style>
+    .product-card {
+        background: white;
+        border-radius: 15px;
+        padding: 20px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+        margin-bottom: 20px;
+        transition: transform 0.3s ease;
+    }
+
+    .product-card:hover {
+        transform: translateY(-3px);
+    }
+
+    .btn-add {
+        background: linear-gradient(45deg, #667eea, #764ba2);
+        border: none;
+        border-radius: 25px;
+        padding: 10px 25px;
+        color: white;
+        font-weight: bold;
+        transition: all 0.3s ease;
+    }
+
+    .btn-add:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    .product-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 10px;
+        background: linear-gradient(45deg, #ffc107, #fd7e14);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+    }
+
+    .search-box {
+        background: white;
+        border-radius: 15px;
+        padding: 15px;
+        margin-bottom: 20px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+    }
+
+    .stock-badge {
+        padding: 5px 10px;
+        border-radius: 15px;
+        font-size: 12px;
+        font-weight: bold;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2>المنتجات</h2>
+        <p class="text-muted">إدارة المخزون والمنتجات</p>
+    </div>
+    <button class="btn btn-add" data-bs-toggle="modal" data-bs-target="#addProductModal">
+        <i class="fas fa-plus ms-2"></i>
+        إضافة منتج جديد
+    </button>
+</div>
+
+<!-- Search Box -->
+<div class="search-box">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="input-group">
+                <span class="input-group-text">
+                    <i class="fas fa-search"></i>
+                </span>
+                <input type="text" class="form-control" placeholder="البحث عن منتج..." id="searchInput">
+            </div>
+        </div>
+        <div class="col-md-4">
+            <select class="form-select">
+                <option>جميع المنتجات</option>
+                <option>المنتجات النشطة</option>
+                <option>الخدمات</option>
+                <option>المنتجات فقط</option>
+            </select>
+        </div>
+    </div>
+</div>
+
+<!-- Products List -->
+{% if products %}
+{% for product in products %}
+<div class="product-card">
+    <div class="row align-items-center">
+        <div class="col-md-1">
+            <div class="product-icon">
+                <i class="fas fa-{{ 'box' if product.product_type == 'product' else 'cogs' }}"></i>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <h5 class="mb-1">{{ product.name }}</h5>
+            <small class="text-muted">{{ product.code or 'لا يوجد كود' }}</small>
+        </div>
+        <div class="col-md-2">
+            <div class="mb-1">
+                <strong>سعر البيع:</strong>
+                {{ "%.2f"|format(product.sell_price) }} {{ company.currency }}
+            </div>
+            <div>
+                <strong>سعر التكلفة:</strong>
+                {{ "%.2f"|format(product.cost_price) }} {{ company.currency }}
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="mb-1">
+                <strong>المخزون:</strong>
+                <span class="stock-badge bg-{{ 
+                                        'success' if product.stock_quantity > product.min_stock 
+                                        else 'warning' if product.stock_quantity > 0 
+                                        else 'danger' 
+                                    }}">
+                    {{ product.stock_quantity }} {{ product.unit }}
+                </span>
+            </div>
+            <div>
+                <strong>الحد الأدنى:</strong>
+                {{ product.min_stock }} {{ product.unit }}
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="mb-1">
+                <strong>الضريبة:</strong>
+                {{ "%.1f"|format(product.tax_rate) }}%
+            </div>
+            <div>
+                <span class="badge bg-{{ 'success' if product.is_taxable else 'secondary' }}">
+                    {{ 'خاضع للضريبة' if product.is_taxable else 'معفى من الضريبة' }}
+                </span>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <span class="badge bg-{{ 'info' if product.product_type == 'product' else 'primary' }}">
+                {{ 'منتج' if product.product_type == 'product' else 'خدمة' }}
+            </span>
+            <div class="mt-2">
+                <button class="btn btn-sm btn-outline-primary">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-danger">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+    {% if product.description %}
+    <div class="row mt-3">
+        <div class="col-md-12">
+            <small class="text-muted">{{ product.description }}</small>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endfor %}
+{% else %}
+<div class="text-center py-5">
+    <i class="fas fa-box fa-4x text-muted mb-3"></i>
+    <h4 class="text-muted">لا توجد منتجات</h4>
+    <p class="text-muted">ابدأ بإضافة أول منتج</p>
+    <button class="btn btn-add" data-bs-toggle="modal" data-bs-target="#addProductModal">
+        <i class="fas fa-plus ms-2"></i>
+        إضافة أول منتج
+    </button>
+</div>
+{% endif %}
+</div>
+</div>
+</div>
+
+<!-- Add Product Modal -->
+<div class="modal fade" id="addProductModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">إضافة منتج جديد</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('add_product') }}">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label class="form-label">الاسم *</label>
+                            <input type="text" name="name" class="form-control" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">الاسم بالعربي</label>
+                            <input type="text" name="name_ar" class="form-control">
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-md-4">
+                            <label class="form-label">الكود</label>
+                            <input type="text" name="code" class="form-control">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">النوع</label>
+                            <select name="product_type" class="form-select">
+                                <option value="product">منتج</option>
+                                <option value="service">خدمة</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">الوحدة</label>
+                            <input type="text" name="unit" class="form-control" value="وحدة">
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <label class="form-label">سعر التكلفة</label>
+                            <input type="number" name="cost_price" class="form-control" value="0" step="0.01">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">سعر البيع</label>
+                            <input type="number" name="sell_price" class="form-control" value="0" step="0.01">
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-md-4">
+                            <label class="form-label">الكمية المتاحة</label>
+                            <input type="number" name="stock_quantity" class="form-control" value="0" step="0.01">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">الحد الأدنى للمخزون</label>
+                            <input type="number" name="min_stock" class="form-control" value="0" step="0.01">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">نسبة الضريبة (%)</label>
+                            <input type="number" name="tax_rate" class="form-control" value="15" step="0.1">
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-md-12">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="is_taxable" id="is_taxable"
+                                    checked>
+                                <label class="form-check-label" for="is_taxable">
+                                    خاضع للضريبة
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-md-12">
+                            <label class="form-label">الوصف</label>
+                            <textarea name="description" class="form-control" rows="3"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="submit" class="btn btn-primary">إضافة منتج</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Search functionality
+    document.getElementById('searchInput').addEventListener('keyup', function () {
+        const searchTerm = this.value.toLowerCase();
+        const cards = document.querySelectorAll('.product-card');
+
+        cards.forEach(card => {
+            const text = card.textContent.toLowerCase();
+            card.style.display = text.includes(searchTerm) ? 'block' : 'none';
+        });
+    });
+</script>
+{% endblock %}

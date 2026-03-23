@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+
+{% block title %}الفواتير{% endblock %}
+
+{% block extra_css %}
+<style>
+    .invoice-card {
+        background: white;
+        border-radius: 15px;
+        padding: 20px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+        margin-bottom: 20px;
+        transition: transform 0.3s ease;
+    }
+
+    .invoice-card:hover {
+        transform: translateY(-3px);
+    }
+
+    .status-badge {
+        padding: 5px 15px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: bold;
+    }
+
+    .btn-add {
+        background: linear-gradient(45deg, #667eea, #764ba2);
+        border: none;
+        border-radius: 25px;
+        padding: 10px 25px;
+        color: white;
+        font-weight: bold;
+        transition: all 0.3s ease;
+    }
+
+    .btn-add:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    .filter-tabs {
+        background: white;
+        border-radius: 15px;
+        padding: 15px;
+        margin-bottom: 20px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+    }
+
+    .filter-tabs .nav-link {
+        border: none;
+        color: #666;
+        padding: 10px 20px;
+        border-radius: 20px;
+        margin: 0 5px;
+        transition: all 0.3s ease;
+    }
+
+    .filter-tabs .nav-link.active {
+        background: linear-gradient(45deg, #667eea, #764ba2);
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2>الفواتير</h2>
+        <p class="text-muted">إدارة فواتير المبيعات</p>
+    </div>
+    <a href="{{ url_for('add_invoice') }}" class="btn btn-add">
+        <i class="fas fa-plus ms-2"></i>
+        إنشاء فاتورة جديدة
+    </a>
+</div>
+
+<!-- Filter Tabs -->
+<div class="filter-tabs">
+    <ul class="nav nav-pills">
+        <li class="nav-item">
+            <a class="nav-link {{ 'active' if status_filter == 'all' }}" href="{{ url_for('invoices', status='all') }}">
+                <i class="fas fa-list ms-2"></i>
+                جميع الفواتير
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {{ 'active' if status_filter == 'draft' }}"
+                href="{{ url_for('invoices', status='draft') }}">
+                <i class="fas fa-edit ms-2"></i>
+                مسودة
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {{ 'active' if status_filter == 'sent' }}"
+                href="{{ url_for('invoices', status='sent') }}">
+                <i class="fas fa-paper-plane ms-2"></i>
+                مرسلة
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {{ 'active' if status_filter == 'paid' }}"
+                href="{{ url_for('invoices', status='paid') }}">
+                <i class="fas fa-check-circle ms-2"></i>
+                مدفوعة
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {{ 'active' if status_filter == 'overdue' }}"
+                href="{{ url_for('invoices', status='overdue') }}">
+                <i class="fas fa-exclamation-triangle ms-2"></i>
+                متأخرة
+            </a>
+        </li>
+    </ul>
+</div>
+
+<!-- Invoices List -->
+{% if invoices %}
+{% for invoice in invoices %}
+<div class="invoice-card">
+    <div class="row align-items-center">
+        <div class="col-md-3">
+            <h5 class="mb-1">{{ invoice.invoice_number }}</h5>
+            <small class="text-muted">{{ invoice.invoice_date.strftime('%Y-%m-%d') }}</small>
+        </div>
+        <div class="col-md-3">
+            <strong>{{ invoice.customer.name }}</strong>
+            <br>
+            <small class="text-muted">{{ invoice.customer.email or 'لا يوجد بريد' }}</small>
+        </div>
+        <div class="col-md-2">
+            <h4 class="mb-1">{{ "%.2f"|format(invoice.total) }} {{ invoice.currency }}</h4>
+            <small class="text-muted">المبلغ الإجمالي</small>
+        </div>
+        <div class="col-md-2">
+            <span class="status-badge bg-{{ 
+                                    'success' if invoice.status == 'paid' 
+                                    else 'warning' if invoice.status in ['sent', 'partial'] 
+                                    else 'danger' if invoice.status == 'overdue'
+                                    else 'secondary' 
+                                }}">
+                {{
+                'مدفوعة' if invoice.status == 'paid'
+                else 'مرسلة' if invoice.status == 'sent'
+                else 'مدفوعة جزئياً' if invoice.status == 'partial'
+                else 'متأخرة' if invoice.status == 'overdue'
+                else 'مسودة'
+                }}
+            </span>
+        </div>
+        <div class="col-md-2">
+            <div class="btn-group">
+                <a href="{{ url_for('view_invoice', id=invoice.id) }}" class="btn btn-sm btn-outline-primary">
+                    <i class="fas fa-eye"></i>
+                </a>
+                {% if invoice.status == 'draft' %}
+                <form method="POST" action="{{ url_for('approve_invoice', id=invoice.id) }}" class="d-inline">
+                    <button type="submit" class="btn btn-sm btn-outline-success">
+                        <i class="fas fa-check"></i>
+                    </button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% else %}
+<div class="text-center py-5">
+    <i class="fas fa-file-invoice fa-4x text-muted mb-3"></i>
+    <h4 class="text-muted">لا توجد فواتير</h4>
+    <p class="text-muted">ابدأ بإنشاء فاتورة جديدة</p>
+    <a href="{{ url_for('add_invoice') }}" class="btn btn-add">
+        <i class="fas fa-plus ms-2"></i>
+        إنشاء أول فاتورة
+    </a>
+</div>
+{% endif %}
+{% endblock %}

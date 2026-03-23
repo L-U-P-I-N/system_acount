@@ -1,0 +1,236 @@
+{% extends "base.html" %}
+
+{% block title %}العملاء{% endblock %}
+
+{% block extra_css %}
+<style>
+    .customer-card {
+        background: white;
+        border-radius: 15px;
+        padding: 20px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+        margin-bottom: 20px;
+        transition: transform 0.3s ease;
+    }
+
+    .customer-card:hover {
+        transform: translateY(-3px);
+    }
+
+    .btn-add {
+        background: linear-gradient(45deg, #667eea, #764ba2);
+        border: none;
+        border-radius: 25px;
+        padding: 10px 25px;
+        color: white;
+        font-weight: bold;
+        transition: all 0.3s ease;
+    }
+
+    .btn-add:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    .customer-avatar {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: linear-gradient(45deg, #667eea, #764ba2);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 18px;
+    }
+
+    .search-box {
+        background: white;
+        border-radius: 15px;
+        padding: 15px;
+        margin-bottom: 20px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2>العملاء</h2>
+        <p class="text-muted">إدارة قائمة العملاء</p>
+    </div>
+    <button class="btn btn-add" data-bs-toggle="modal" data-bs-target="#addCustomerModal">
+        <i class="fas fa-plus ms-2"></i>
+        إضافة عميل جديد
+    </button>
+</div>
+
+<!-- Search Box -->
+<div class="search-box">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="input-group">
+                <span class="input-group-text">
+                    <i class="fas fa-search"></i>
+                </span>
+                <input type="text" class="form-control" placeholder="البحث عن عميل..." id="searchInput">
+            </div>
+        </div>
+        <div class="col-md-4">
+            <select class="form-select">
+                <option>جميع العملاء</option>
+                <option>العملاء النشطين</option>
+                <option>العملاء غير النشطين</option>
+            </select>
+        </div>
+    </div>
+</div>
+
+<!-- Customers List -->
+{% if customers %}
+{% for customer in customers %}
+<div class="customer-card">
+    <div class="row align-items-center">
+        <div class="col-md-1">
+            <div class="customer-avatar">
+                {{ customer.name[0] if customer.name else 'C' }}
+            </div>
+        </div>
+        <div class="col-md-3">
+            <h5 class="mb-1">{{ customer.name }}</h5>
+            <small class="text-muted">{{ customer.code }}</small>
+        </div>
+        <div class="col-md-3">
+            <div class="mb-1">
+                <i class="fas fa-envelope ms-2 text-muted"></i>
+                {{ customer.email or 'لا يوجد بريد' }}
+            </div>
+            <div>
+                <i class="fas fa-phone ms-2 text-muted"></i>
+                {{ customer.phone or 'لا يوجد هاتف' }}
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="mb-1">
+                <strong>الرصيد:</strong>
+                <span class="{{ 'text-success' if customer.balance >= 0 else 'text-danger' }}">
+                    {{ "%.2f"|format(customer.balance) }} {{ company.currency }}
+                </span>
+            </div>
+            <div>
+                <strong>حد الائتمان:</strong>
+                {{ "%.2f"|format(customer.credit_limit) }} {{ company.currency }}
+            </div>
+        </div>
+        <div class="col-md-2">
+            <span class="badge bg-{{ 'success' if customer.is_active else 'secondary' }}">
+                {{ 'نشط' if customer.is_active else 'غير نشط' }}
+            </span>
+            <div class="mt-2">
+                <button class="btn btn-sm btn-outline-primary">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-danger">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% else %}
+<div class="text-center py-5">
+    <i class="fas fa-users fa-4x text-muted mb-3"></i>
+    <h4 class="text-muted">لا يوجد عملاء</h4>
+    <p class="text-muted">ابدأ بإضافة أول عميل</p>
+    <button class="btn btn-add" data-bs-toggle="modal" data-bs-target="#addCustomerModal">
+        <i class="fas fa-plus ms-2"></i>
+        إضافة أول عميل
+    </button>
+</div>
+{% endif %}
+
+<!-- Add Customer Modal -->
+<div class="modal fade" id="addCustomerModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">إضافة عميل جديد</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('add_customer') }}">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label class="form-label">الاسم *</label>
+                            <input type="text" name="name" class="form-control" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">الاسم بالعربي</label>
+                            <input type="text" name="name_ar" class="form-control">
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <label class="form-label">البريد الإلكتروني</label>
+                            <input type="email" name="email" class="form-control">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">الهاتف</label>
+                            <input type="tel" name="phone" class="form-control">
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <label class="form-label">المدينة</label>
+                            <input type="text" name="city" class="form-control">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">البلد</label>
+                            <input type="text" name="country" class="form-control">
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-md-12">
+                            <label class="form-label">العنوان</label>
+                            <textarea name="address" class="form-control" rows="2"></textarea>
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <label class="form-label">الرقم الضريبي</label>
+                            <input type="text" name="tax_number" class="form-control">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">حد الائتمان</label>
+                            <input type="number" name="credit_limit" class="form-control" value="0" step="0.01">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="submit" class="btn btn-primary">إضافة عميل</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Search functionality
+    document.getElementById('searchInput').addEventListener('keyup', function () {
+        const searchTerm = this.value.toLowerCase();
+        const cards = document.querySelectorAll('.customer-card');
+
+        cards.forEach(card => {
+            const text = card.textContent.toLowerCase();
+            card.style.display = text.includes(searchTerm) ? 'block' : 'none';
+        });
+    });
+</script>
+{% endblock %}

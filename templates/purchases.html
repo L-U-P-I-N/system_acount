@@ -1,0 +1,341 @@
+{% extends "base.html" %}
+
+{% block title %}المشتريات{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-shopping-cart ms-2"></i>المشتريات</h2>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addPurchaseModal">
+                    <i class="fas fa-plus ms-2"></i>إنشاء طلب شراء
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- الفلاتر -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    <form method="GET" class="row g-3">
+                        <div class="col-md-3">
+                            <label class="form-label">الحالة</label>
+                            <select name="status" class="form-select">
+                                <option value="">الكل</option>
+                                <option value="draft" {% if status_filter == 'draft' %}selected{% endif %}>مسودة</option>
+                                <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>في الانتظار</option>
+                                <option value="approved" {% if status_filter == 'approved' %}selected{% endif %}>معتمد</option>
+                                <option value="partial" {% if status_filter == 'partial' %}selected{% endif %}>مدفوع جزئياً</option>
+                                <option value="paid" {% if status_filter == 'paid' %}selected{% endif %}>مدفوع</option>
+                                <option value="cancelled" {% if status_filter == 'cancelled' %}selected{% endif %}>ملغي</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">المورد</label>
+                            <select name="supplier" class="form-select">
+                                <option value="">الكل</option>
+                                {% for supplier in suppliers %}
+                                <option value="{{ supplier.id }}">{{ supplier.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">من تاريخ</label>
+                            <input type="date" name="date_from" class="form-control" value="{{ request.args.get('date_from', '') }}">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">إلى تاريخ</label>
+                            <input type="date" name="date_to" class="form-control" value="{{ request.args.get('date_to', '') }}">
+                        </div>
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-primary">بحث</button>
+                            <a href="{{ url_for('purchases') }}" class="btn btn-secondary">مسح الفلاتر</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- الإحصائيات -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h5 class="card-title">إجمالي المشتريات</h5>
+                    <h3>{{ "{:,.2f}".format(purchases|sum(attribute='total')) }} {{ company.currency }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <h5 class="card-title">في الانتظار</h5>
+                    <h3>{{ purchases|selectattr('status', 'equalto', 'pending')|list|length }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h5 class="card-title">مدفوع</h5>
+                    <h3>{{ purchases|selectattr('status', 'equalto', 'paid')|list|length }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-danger text-white">
+                <div class="card-body">
+                    <h5 class="card-title">الديون المستحقة</h5>
+                    <h3>{{ "{:,.2f}".format(purchases|selectattr('status', 'in', ['pending', 'approved', 'partial'])|list|sum(attribute='balance_due')) }} {{ company.currency }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- قائمة المشتريات -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">قائمة المشتريات</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>رقم الطلب</th>
+                            <th>المورد</th>
+                            <th>التاريخ</th>
+                            <th>الإجمالي</th>
+                            <th>المدفوع</th>
+                            <th>المتبقي</th>
+                            <th>الحالة</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for purchase in purchases %}
+                        <tr>
+                            <td>{{ purchase.purchase_number }}</td>
+                            <td>{{ purchase.supplier.name if purchase.supplier else '-' }}</td>
+                            <td>{{ purchase.purchase_date.strftime('%Y-%m-%d') }}</td>
+                            <td>{{ "{:,.2f}".format(purchase.total) }} {{ company.currency }}</td>
+                            <td>{{ "{:,.2f}".format(purchase.paid_amount) }} {{ company.currency }}</td>
+                            <td>{{ "{:,.2f}".format(purchase.balance_due) }} {{ company.currency }}</td>
+                            <td>
+                                {% if purchase.status == 'draft' %}
+                                    <span class="badge bg-secondary">مسودة</span>
+                                {% elif purchase.status == 'pending' %}
+                                    <span class="badge bg-warning">في الانتظار</span>
+                                {% elif purchase.status == 'approved' %}
+                                    <span class="badge bg-info">معتمد</span>
+                                {% elif purchase.status == 'partial' %}
+                                    <span class="badge bg-primary">مدفوع جزئياً</span>
+                                {% elif purchase.status == 'paid' %}
+                                    <span class="badge bg-success">مدفوع</span>
+                                {% else %}
+                                    <span class="badge bg-danger">ملغي</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-info" onclick="viewPurchase({{ purchase.id }})">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="btn btn-sm btn-warning" onclick="editPurchase({{ purchase.id }})">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                {% if purchase.status == 'pending' %}
+                                <button class="btn btn-sm btn-success" onclick="approvePurchase({{ purchase.id }})">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                                {% endif %}
+                                <button class="btn btn-sm btn-danger" onclick="deletePurchase({{ purchase.id }})">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="8" class="text-center">لا توجد مشتريات</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal إضافة طلب شراء -->
+<div class="modal fade" id="addPurchaseModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">إنشاء طلب شراء جديد</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('add_purchase') }}">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">المورد</label>
+                                <select name="supplier_id" class="form-select" required>
+                                    <option value="">اختر المورد</option>
+                                    {% for supplier in suppliers %}
+                                    <option value="{{ supplier.id }}">{{ supplier.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">التاريخ</label>
+                                <input type="date" class="form-control" name="purchase_date" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">الملاحظات</label>
+                        <textarea class="form-control" name="notes" rows="2"></textarea>
+                    </div>
+
+                    <h6>بنود الطلب</h6>
+                    <div class="table-responsive">
+                        <table class="table" id="purchaseItems">
+                            <thead>
+                                <tr>
+                                    <th>المنتج</th>
+                                    <th>الوصف</th>
+                                    <th>الكمية</th>
+                                    <th>السعر</th>
+                                    <th>الإجمالي</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>
+                                        <select name="product_id[]" class="form-select product-select">
+                                            <option value="">اختر المنتج</option>
+                                            {% for product in products %}
+                                            <option value="{{ product.id }}">{{ product.name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </td>
+                                    <td><input type="text" name="description[]" class="form-control"></td>
+                                    <td><input type="number" name="quantity[]" class="form-control quantity" step="0.01" min="0"></td>
+                                    <td><input type="number" name="price[]" class="form-control price" step="0.01" min="0"></td>
+                                    <td><input type="text" class="form-control line-total" readonly></td>
+                                    <td><button type="button" class="btn btn-sm btn-danger" onclick="removeRow(this)">×</button></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-primary" onclick="addRow()">إضافة بند</button>
+                    
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">ضريبة القيمة المضافة (%)</label>
+                                <input type="number" name="tax_rate" class="form-control" step="0.01" value="15">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">الإجمالي</label>
+                                <input type="text" class="form-control" id="grandTotal" readonly>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="submit" class="btn btn-primary">حفظ</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function addRow() {
+    const tbody = document.querySelector('#purchaseItems tbody');
+    const newRow = document.createElement('tr');
+    newRow.innerHTML = `
+        <td>
+            <select name="product_id[]" class="form-select product-select">
+                <option value="">اختر المنتج</option>
+                {% for product in products %}
+                <option value="{{ product.id }}">{{ product.name }}</option>
+                {% endfor %}
+            </select>
+        </td>
+        <td><input type="text" name="description[]" class="form-control"></td>
+        <td><input type="number" name="quantity[]" class="form-control quantity" step="0.01" min="0"></td>
+        <td><input type="number" name="price[]" class="form-control price" step="0.01" min="0"></td>
+        <td><input type="text" class="form-control line-total" readonly></td>
+        <td><button type="button" class="btn btn-sm btn-danger" onclick="removeRow(this)">×</button></td>
+    `;
+    tbody.appendChild(newRow);
+    attachEventListeners();
+}
+
+function removeRow(button) {
+    button.closest('tr').remove();
+    calculateTotals();
+}
+
+function calculateTotals() {
+    let subtotal = 0;
+    document.querySelectorAll('#purchaseItems tbody tr').forEach(row => {
+        const quantity = parseFloat(row.querySelector('.quantity').value) || 0;
+        const price = parseFloat(row.querySelector('.price').value) || 0;
+        const total = quantity * price;
+        row.querySelector('.line-total').value = total.toFixed(2);
+        subtotal += total;
+    });
+    
+    const taxRate = parseFloat(document.querySelector('input[name="tax_rate"]').value) || 0;
+    const tax = subtotal * (taxRate / 100);
+    const grandTotal = subtotal + tax;
+    
+    document.getElementById('grandTotal').value = grandTotal.toFixed(2);
+}
+
+function attachEventListeners() {
+    document.querySelectorAll('.quantity, .price').forEach(input => {
+        input.addEventListener('input', calculateTotals);
+    });
+}
+
+function viewPurchase(id) {
+    window.location.href = `/purchases/${id}`;
+}
+
+function editPurchase(id) {
+    window.location.href = `/purchases/${id}/edit`;
+}
+
+function approvePurchase(id) {
+    if (confirm('هل أنت متأكد من اعتماد هذا الطلب؟')) {
+        window.location.href = `/purchases/${id}/approve`;
+    }
+}
+
+function deletePurchase(id) {
+    if (confirm('هل أنت متأكد من حذف هذا الطلب؟')) {
+        window.location.href = `/purchases/${id}/delete`;
+    }
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+    attachEventListeners();
+});
+</script>
+{% endblock %}

@@ -1,0 +1,322 @@
+{% extends "base.html" %}
+
+{% block title %}إنشاء قيد محاسبي{% endblock %}
+
+{% block extra_css %}
+<style>
+    .journal-form {
+        background: white;
+        border-radius: 15px;
+        padding: 30px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+    }
+
+    .form-control,
+    .form-select {
+        border-radius: 10px;
+        padding: 12px;
+        border: 2px solid #e0e0e0;
+        transition: all 0.3s ease;
+    }
+
+    .form-control:focus,
+    .form-select:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+
+    .btn-save {
+        background: linear-gradient(45deg, #667eea, #764ba2);
+        border: none;
+        border-radius: 25px;
+        padding: 12px 30px;
+        color: white;
+        font-weight: bold;
+        transition: all 0.3s ease;
+    }
+
+    .btn-save:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    .journal-line {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 10px;
+    }
+
+    .line-row {
+        background: white;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 10px;
+        border: 1px solid #e0e0e0;
+    }
+
+    .balance-info {
+        background: linear-gradient(45deg, #e8f5e8, #f0f8f0);
+        border-radius: 10px;
+        padding: 20px;
+        margin-top: 20px;
+    }
+
+    .debit {
+        color: #dc3545;
+        font-weight: bold;
+    }
+
+    .credit {
+        color: #28a745;
+        font-weight: bold;
+    }
+
+    .balanced {
+        color: #28a745;
+    }
+
+    .unbalanced {
+        color: #dc3545;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2>إنشاء قيد محاسبي جديد</h2>
+        <p class="text-muted">إضافة قيد يومي يدوي</p>
+    </div>
+    <a href="{{ url_for('journal_entries') }}" class="btn btn-secondary">
+        <i class="fas fa-arrow-right ms-2"></i>
+        العودة للقيود
+    </a>
+</div>
+
+<!-- Journal Entry Form -->
+<div class="journal-form">
+    <form method="POST" id="journalForm">
+        <!-- Entry Information -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <label class="form-label">رقم القيد</label>
+                <input type="text" class="form-control" value="سيتم إنشاؤه تلقائياً" readonly>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">التاريخ *</label>
+                <input type="date" name="entry_date" class="form-control"
+                    value="{{ moment().format('YYYY-MM-DD') if moment else '' }}" required>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">المرجع</label>
+                <input type="text" name="reference" class="form-control" placeholder="رقم المستند أو المرجع">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">الوصف *</label>
+                <input type="text" name="description" class="form-control" placeholder="وصف القيد" required>
+            </div>
+        </div>
+
+        <!-- Journal Lines -->
+        <div class="journal-line">
+            <h5 class="mb-3">
+                <i class="fas fa-list ms-2 text-primary"></i>
+                بنود القيد
+                <small class="text-muted me-2">(يجب أن يتساوى المدين والدائن)</small>
+            </h5>
+
+            <div id="linesContainer">
+                <!-- First Line Row -->
+                <div class="line-row">
+                    <div class="row align-items-center">
+                        <div class="col-md-4">
+                            <label class="form-label">الحساب *</label>
+                            <select name="line_account[]" class="form-select" required>
+                                <option value="">اختر الحساب</option>
+                                {% for account in accounts %}
+                                <option value="{{ account.id }}">{{ account.code }} - {{ account.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">الوصف</label>
+                            <input type="text" name="line_description[]" class="form-control" placeholder="وصف البند">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">مدين</label>
+                            <input type="number" name="line_debit[]" class="form-control" value="0" min="0" step="0.01">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">دائن</label>
+                            <input type="number" name="line_credit[]" class="form-control" value="0" min="0"
+                                step="0.01">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Second Line Row -->
+                <div class="line-row">
+                    <div class="row align-items-center">
+                        <div class="col-md-4">
+                            <label class="form-label">الحساب *</label>
+                            <select name="line_account[]" class="form-select" required>
+                                <option value="">اختر الحساب</option>
+                                {% for account in accounts %}
+                                <option value="{{ account.id }}">{{ account.code }} - {{ account.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">الوصف</label>
+                            <input type="text" name="line_description[]" class="form-control" placeholder="وصف البند">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">مدين</label>
+                            <input type="number" name="line_debit[]" class="form-control" value="0" min="0" step="0.01">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">دائن</label>
+                            <input type="number" name="line_credit[]" class="form-control" value="0" min="0"
+                                step="0.01">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-3">
+                <button type="button" class="btn btn-outline-primary" onclick="addNewLine()">
+                    <i class="fas fa-plus ms-2"></i>
+                    إضافة بند جديد
+                </button>
+            </div>
+        </div>
+
+        <!-- Balance Summary -->
+        <div class="balance-info">
+            <div class="row">
+                <div class="col-md-4">
+                    <label class="form-label">إجمالي المدين</label>
+                    <h4 id="totalDebit" class="debit">0.00 {{ company.currency }}</h4>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">إجمالي الدائن</label>
+                    <h4 id="totalCredit" class="credit">0.00 {{ company.currency }}</h4>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">الرصيد</label>
+                    <h4 id="balance" class="balanced">0.00 {{ company.currency }}</h4>
+                </div>
+            </div>
+            <div id="balanceWarning" class="alert alert-warning mt-3" style="display: none;">
+                <i class="fas fa-exclamation-triangle ms-2"></i>
+                القيد غير متوازن! يجب أن يتساوى إجمالي المدين والدائن.
+            </div>
+        </div>
+
+        <!-- Submit Buttons -->
+        <div class="row mt-4">
+            <div class="col-md-12">
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-save" id="submitBtn">
+                        <i class="fas fa-save ms-2"></i>
+                        حفظ القيد
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary"
+                        onclick="window.location.href='{{ url_for('journal_entries') }}'">
+                        <i class="fas fa-times ms-2"></i>
+                        إلغاء
+                    </button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let lineCount = 2;
+
+    function addNewLine() {
+        lineCount++;
+        const lineHtml = `
+                <div class="line-row">
+                    <div class="row align-items-center">
+                        <div class="col-md-4">
+                            <label class="form-label">الحساب *</label>
+                            <select name="line_account[]" class="form-select" required>
+                                <option value="">اختر الحساب</option>
+                                {% for account in accounts %}
+                                    <option value="{{ account.id }}">{{ account.code }} - {{ account.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">الوصف</label>
+                            <input type="text" name="line_description[]" class="form-control" placeholder="وصف البند">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">مدين</label>
+                            <input type="number" name="line_debit[]" class="form-control" value="0" min="0" step="0.01">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">دائن</label>
+                            <input type="number" name="line_credit[]" class="form-control" value="0" min="0" step="0.01">
+                            <button type="button" class="btn btn-sm btn-danger mt-2" onclick="removeLine(this)">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        document.getElementById('linesContainer').insertAdjacentHTML('beforeend', lineHtml);
+        attachLineListeners();
+    }
+
+    function removeLine(button) {
+        button.closest('.line-row').remove();
+        calculateBalance();
+    }
+
+    function attachLineListeners() {
+        document.querySelectorAll('input[name="line_debit[]"], input[name="line_credit[]"]').forEach(input => {
+            input.removeEventListener('input', calculateBalance);
+            input.addEventListener('input', calculateBalance);
+        });
+    }
+
+    function calculateBalance() {
+        let totalDebit = 0;
+        let totalCredit = 0;
+
+        document.querySelectorAll('.line-row').forEach(row => {
+            const debit = parseFloat(row.querySelector('input[name="line_debit[]"]').value) || 0;
+            const credit = parseFloat(row.querySelector('input[name="line_credit[]"]').value) || 0;
+
+            totalDebit += debit;
+            totalCredit += credit;
+        });
+
+        const balance = totalDebit - totalCredit;
+        const isBalanced = Math.abs(balance) < 0.01;
+
+        document.getElementById('totalDebit').textContent = totalDebit.toFixed(2) + ' {{ company.currency }}';
+        document.getElementById('totalCredit').textContent = totalCredit.toFixed(2) + ' {{ company.currency }}';
+
+        const balanceElement = document.getElementById('balance');
+        balanceElement.textContent = (Math.abs(balance)).toFixed(2) + ' {{ company.currency }}';
+        balanceElement.className = isBalanced ? 'balanced' : 'unbalanced';
+
+        document.getElementById('balanceWarning').style.display = isBalanced ? 'none' : 'block';
+        document.getElementById('submitBtn').disabled = !isBalanced;
+    }
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function () {
+        attachLineListeners();
+        calculateBalance();
+    });
+</script>
+{% endblock %}

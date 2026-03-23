@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>فاتورة رقم {{ invoice.invoice_number }}</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;900&display=swap');
+        
+        * {
+            font-family: 'Tajawal', sans-serif;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: #f5f5f5;
+            padding: 20px;
+        }
+        
+        .invoice-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+        
+        .invoice-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #667eea;
+        }
+        
+        .company-info h1 {
+            color: #667eea;
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        
+        .company-info p {
+            color: #666;
+            margin: 5px 0;
+            font-size: 14px;
+        }
+        
+        .invoice-details {
+            text-align: left;
+            direction: ltr;
+        }
+        
+        .invoice-number {
+            font-size: 24px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .invoice-meta {
+            color: #666;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        
+        .billing-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            gap: 40px;
+        }
+        
+        .bill-to, .bill-from {
+            flex: 1;
+        }
+        
+        .section-title {
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+        
+        .billing-info p {
+            color: #666;
+            margin: 5px 0;
+            font-size: 14px;
+        }
+        
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        
+        .items-table th {
+            background: #667eea;
+            color: white;
+            padding: 15px;
+            text-align: right;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        .items-table td {
+            padding: 15px;
+            text-align: right;
+            border-bottom: 1px solid #eee;
+            font-size: 14px;
+        }
+        
+        .items-table .text-right {
+            text-align: left;
+            direction: ltr;
+        }
+        
+        .items-table .description {
+            font-weight: 500;
+            color: #333;
+        }
+        
+        .totals-section {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px solid #667eea;
+        }
+        
+        .totals-table {
+            width: 300px;
+            float: left;
+            direction: ltr;
+        }
+        
+        .totals-table td {
+            padding: 10px;
+            font-size: 14px;
+        }
+        
+        .totals-table .label {
+            text-align: right;
+            color: #666;
+        }
+        
+        .totals-table .value {
+            text-align: left;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .totals-table .total-row {
+            font-size: 18px;
+            font-weight: 700;
+            color: #667eea;
+            border-top: 2px solid #667eea;
+            padding-top: 15px;
+            margin-top: 10px;
+        }
+        
+        .notes-section {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+        
+        .notes-title {
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+        
+        .notes-content {
+            color: #666;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        
+        .footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+            text-align: center;
+            color: #666;
+            font-size: 12px;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .status-draft {
+            background: #f8f9fa;
+            color: #6c757d;
+        }
+        
+        .status-sent {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status-paid {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+        
+        .status-overdue {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .watermark {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-45deg);
+            font-size: 120px;
+            color: rgba(102, 126, 234, 0.1);
+            font-weight: 900;
+            z-index: -1;
+            pointer-events: none;
+        }
+        
+        @media print {
+            body {
+                padding: 0;
+                background: white;
+            }
+            
+            .invoice-container {
+                box-shadow: none;
+                border-radius: 0;
+                padding: 20px;
+            }
+            
+            .watermark {
+                position: absolute;
+            }
+            
+            .no-print {
+                display: none !important;
+            }
+        }
+        
+        .page-break {
+            page-break-before: always;
+        }
+    </style>
+</head>
+<body>
+    {% if invoice.status == 'draft' %}
+    <div class="watermark">مسودة</div>
+    {% endif %}
+    
+    <div class="invoice-container">
+        <!-- Header -->
+        <div class="invoice-header">
+            <div class="company-info">
+                <h1>{{ company.name }}</h1>
+                <p>{{ company.address or '' }}</p>
+                <p>{{ company.city or '' }} {{ company.country_code or '' }}</p>
+                <p>الهاتف: {{ company.phone or '' }}</p>
+                <p>البريد: {{ company.email or '' }}</p>
+                {% if company.tax_number %}
+                <p>الرقم الضريبي: {{ company.tax_number }}</p>
+                {% endif %}
+            </div>
+            
+            <div class="invoice-details">
+                <div class="invoice-number">فاتورة #{{ invoice.invoice_number }}</div>
+                <div class="status-badge status-{{ invoice.status }}">
+                    {% if invoice.status == 'draft' %}مسودة
+                    {% elif invoice.status == 'sent' %}مرسلة
+                    {% elif invoice.status == 'paid' %}مدفوعة
+                    {% elif invoice.status == 'overdue' %}متأخرة
+                    {% else %}{{ invoice.status }}
+                    {% endif %}
+                </div>
+                <div class="invoice-meta">
+                    <div>التاريخ: {{ invoice.invoice_date.strftime('%Y-%m-%d') }}</div>
+                    {% if invoice.due_date %}
+                    <div>تاريخ الاستحقاق: {{ invoice.due_date.strftime('%Y-%m-%d') }}</div>
+                    {% endif %}
+                    {% if invoice.po_number %}
+                    <div>رقم أمر الشراء: {{ invoice.po_number }}</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Billing Information -->
+        <div class="billing-info">
+            <div class="bill-from">
+                <div class="section-title">معلومات الشركة</div>
+                <p><strong>{{ company.name }}</strong></p>
+                <p>{{ company.address or '' }}</p>
+                <p>{{ company.city or '' }} {{ company.country_code or '' }}</p>
+                <p>الهاتف: {{ company.phone or '' }}</p>
+                <p>البريد: {{ company.email or '' }}</p>
+                {% if company.tax_number %}
+                <p>الرقم الضريبي: {{ company.tax_number }}</p>
+                {% endif %}
+            </div>
+            
+            <div class="bill-to">
+                <div class="section-title">فاتورة إلى</div>
+                <p><strong>{{ invoice.customer.name }}</strong></p>
+                {% if invoice.customer.address %}
+                <p>{{ invoice.customer.address }}</p>
+                {% endif %}
+                {% if invoice.customer.city %}
+                <p>{{ invoice.customer.city }} {{ invoice.customer.country_code or '' }}</p>
+                {% endif %}
+                {% if invoice.customer.phone %}
+                <p>الهاتف: {{ invoice.customer.phone }}</p>
+                {% endif %}
+                {% if invoice.customer.email %}
+                <p>البريد: {{ invoice.customer.email }}</p>
+                {% endif %}
+                {% if invoice.customer.tax_number %}
+                <p>الرقم الضريبي: {{ invoice.customer.tax_number }}</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Items Table -->
+        <table class="items-table">
+            <thead>
+                <tr>
+                    <th style="width: 5%">#</th>
+                    <th style="width: 45%">الوصف</th>
+                    <th style="width: 15%">الكمية</th>
+                    <th style="width: 15%">السعر</th>
+                    <th style="width: 10%">الضريبة</th>
+                    <th style="width: 10%">الإجمالي</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in invoice.items %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td class="description">{{ item.description }}</td>
+                    <td class="text-right">{{ item.quantity }}</td>
+                    <td class="text-right">{{ "{:,.2f}".format(item.unit_price) }} {{ company.currency }}</td>
+                    <td class="text-right">{{ "{:,.1f}".format(item.tax_rate) }}%</td>
+                    <td class="text-right">{{ "{:,.2f}".format(item.total) }} {{ company.currency }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        <!-- Totals -->
+        <div class="totals-section">
+            <table class="totals-table">
+                <tr>
+                    <td class="label">المجموع الفرعي:</td>
+                    <td class="value">{{ "{:,.2f}".format(invoice.subtotal) }} {{ company.currency }}</td>
+                </tr>
+                <tr>
+                    <td class="label">ضريبة القيمة المضافة:</td>
+                    <td class="value">{{ "{:,.2f}".format(invoice.tax_amount) }} {{ company.currency }}</td>
+                </tr>
+                {% if invoice.discount_amount > 0 %}
+                <tr>
+                    <td class="label">الخصم:</td>
+                    <td class="value">-{{ "{:,.2f}".format(invoice.discount_amount) }} {{ company.currency }}</td>
+                </tr>
+                {% endif %}
+                <tr class="total-row">
+                    <td class="label">الإجمالي:</td>
+                    <td class="value">{{ "{:,.2f}".format(invoice.total) }} {{ company.currency }}</td>
+                </tr>
+                {% if invoice.paid_amount > 0 %}
+                <tr>
+                    <td class="label">المدفوع:</td>
+                    <td class="value">-{{ "{:,.2f}".format(invoice.paid_amount) }} {{ company.currency }}</td>
+                </tr>
+                <tr class="total-row">
+                    <td class="label">المتبقي:</td>
+                    <td class="value">{{ "{:,.2f}".format(invoice.balance_due) }} {{ company.currency }}</td>
+                </tr>
+                {% endif %}
+            </table>
+            
+            <div style="clear: both;"></div>
+        </div>
+        
+        <!-- Notes -->
+        {% if invoice.notes %}
+        <div class="notes-section">
+            <div class="notes-title">ملاحظات</div>
+            <div class="notes-content">{{ invoice.notes }}</div>
+        </div>
+        {% endif %}
+        
+        <!-- Payment Information -->
+        {% if invoice.status in ['sent', 'partial'] %}
+        <div class="notes-section">
+            <div class="notes-title">معلومات الدفع</div>
+            <div class="notes-content">
+                <p>يرجى سداد المبلغ المستحق خلال {{ company.payment_terms or 30 }} يوماً من تاريخ الفاتورة.</p>
+                <p>طرق الدفع المقبولة:</p>
+                <ul style="margin-right: 20px; margin-top: 10px;">
+                    <li>تحويل بنكي</li>
+                    <li>شيك</li>
+                    <li>بطاقة ائتمان</li>
+                </ul>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Footer -->
+        <div class="footer">
+            <p>شكراً لتعاملكم مع {{ company.name }} | هذه الفاتورة تم إنشاؤها بواسطة نظام المحاسبة المتقدم</p>
+            <p>الصفحة 1 من 1</p>
+        </div>
+    </div>
+    
+    <script>
+        // Auto-generate PDF when printed
+        window.onload = function() {
+            if (window.location.search.includes('print=1')) {
+                window.print();
+            }
+        };
+    </script>
+</body>
+</html>

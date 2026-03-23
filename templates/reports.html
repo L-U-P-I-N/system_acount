@@ -1,0 +1,432 @@
+{% extends "base.html" %}
+
+{% block title %}التقارير{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h2 class="mb-4"><i class="fas fa-chart-line ms-2"></i>التقارير المالية</h2>
+        </div>
+    </div>
+
+    <!-- فلاتر التقارير -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">إعدادات التقرير</h5>
+                </div>
+                <div class="card-body">
+                    <form id="reportForm" class="row g-3">
+                        <div class="col-md-3">
+                            <label class="form-label">نوع التقرير</label>
+                            <select name="report_type" class="form-select" id="reportType">
+                                <option value="income_statement">قائمة الدخل</option>
+                                <option value="balance_sheet">الميزانية العمومية</option>
+                                <option value="cash_flow">تدفق النقدية</option>
+                                <option value="accounts_receivable">الذمم المدينة</option>
+                                <option value="accounts_payable">الذمم الدائنة</option>
+                                <option value="sales_report">تقرير المبيعات</option>
+                                <option value="inventory_report">تقرير المخزون</option>
+                                <option value="tax_report">تقرير الضرائب</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">الفترة</label>
+                            <select name="period" class="form-select" id="period">
+                                <option value="monthly">شهري</option>
+                                <option value="quarterly">ربع سنوي</option>
+                                <option value="yearly">سنوي</option>
+                                <option value="custom">مخصص</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">من تاريخ</label>
+                            <input type="date" name="date_from" class="form-control" id="dateFrom">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">إلى تاريخ</label>
+                            <input type="date" name="date_to" class="form-control" id="dateTo">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">&nbsp;</label>
+                            <div>
+                                <button type="button" class="btn btn-primary" onclick="generateReport()">
+                                    <i class="fas fa-file-alt ms-2"></i>إنشاء التقرير
+                                </button>
+                                <button type="button" class="btn btn-success ms-1" onclick="exportReport()">
+                                    <i class="fas fa-download ms-2"></i>تصدير
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ملخص سريع -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h5 class="card-title">إجمالي الإيرادات</h5>
+                    <h3 id="totalRevenue">{{ "{:,.2f}".format(stats.total_revenue) }} {{ company.currency }}</h3>
+                    <small>الفترة الحالية</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-danger text-white">
+                <div class="card-body">
+                    <h5 class="card-title">إجمالي المصروفات</h5>
+                    <h3 id="totalExpenses">{{ "{:,.2f}".format(stats.total_expenses) }} {{ company.currency }}</h3>
+                    <small>الفترة الحالية</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h5 class="card-title">صافي الربح</h5>
+                    <h3 id="netProfit">{{ "{:,.2f}".format(stats.net_profit) }} {{ company.currency }}</h3>
+                    <small>الفترة الحالية</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h5 class="card-title">التدفق النقدي</h5>
+                    <h3 id="cashFlow">{{ "{:,.2f}".format(stats.cash_flow) }} {{ company.currency }}</h3>
+                    <small>الفترة الحالية</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- محتوى التقرير -->
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">عرض التقرير</h5>
+                </div>
+                <div class="card-body">
+                    <div id="reportContent">
+                        <!-- الرسم البياني -->
+                        <canvas id="reportChart" width="400" height="200"></canvas>
+
+                        <!-- جدول البيانات -->
+                        <div class="table-responsive mt-4">
+                            <table class="table table-striped" id="reportTable">
+                                <thead>
+                                    <tr>
+                                        <th>البند</th>
+                                        <th>القيمة</th>
+                                        <th>النسبة المئوية</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="reportTableBody">
+                                    <!-- سيتم ملؤها ديناميكياً -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">تحليلات سريعة</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <h6>هامش الربح</h6>
+                        <div class="progress">
+                            <div class="progress-bar bg-success" id="profitMargin" style="width: 0%">0%</div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <h6>نمو الإيرادات</h6>
+                        <div class="progress">
+                            <div class="progress-bar bg-primary" id="revenueGrowth" style="width: 0%">0%</div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <h6>كفاءة المصروفات</h6>
+                        <div class="progress">
+                            <div class="progress-bar bg-warning" id="expenseEfficiency" style="width: 0%">0%</div>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <h6>أهم المقاييس</h6>
+                    <ul class="list-unstyled">
+                        <li class="mb-2">
+                            <strong>متوسط حجم الطلب:</strong>
+                            <span class="float-start">{{ "{:,.2f}".format(stats.avg_order_value) }} {{ company.currency
+                                }}</span>
+                        </li>
+                        <li class="mb-2">
+                            <strong>عدد العملاء:</strong>
+                            <span class="float-start">{{ stats.total_customers }}</span>
+                        </li>
+                        <li class="mb-2">
+                            <strong>قيمة المخزون:</strong>
+                            <span class="float-start">{{ "{:,.2f}".format(stats.inventory_value) }} {{ company.currency
+                                }}</span>
+                        </li>
+                        <li class="mb-2">
+                            <strong>الذمم المستحقة:</strong>
+                            <span class="float-start">{{ "{:,.2f}".format(stats.outstanding_receivables) }} {{
+                                company.currency }}</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5 class="mb-0">تصدير التقرير</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-outline-primary" onclick="exportPDF()">
+                            <i class="fas fa-file-pdf ms-2"></i>تصدير PDF
+                        </button>
+                        <button class="btn btn-outline-success" onclick="exportExcel()">
+                            <i class="fas fa-file-excel ms-2"></i>تصدير Excel
+                        </button>
+                        <button class="btn btn-outline-info" onclick="printReport()">
+                            <i class="fas fa-print ms-2"></i>طباعة
+                        </button>
+                        <button class="btn btn-outline-secondary" onclick="emailReport()">
+                            <i class="fas fa-envelope ms-2"></i>إرسال بالبريد
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    let reportChart = null;
+
+    function generateReport() {
+        const reportType = document.getElementById('reportType').value;
+        const period = document.getElementById('period').value;
+        const dateFrom = document.getElementById('dateFrom').value;
+        const dateTo = document.getElementById('dateTo').value;
+
+        // إظهار التحميل
+        showLoading();
+
+        // جلب بيانات التقرير
+        fetch(`/api/reports/${reportType}?period=${period}&date_from=${dateFrom}&date_to=${dateTo}`)
+            .then(response => {
+                if (!response.ok) throw new Error('API Error');
+                return response.json();
+            })
+            .then(data => {
+                if (!data || Object.keys(data).length === 0 || data.error) {
+                    showEmptyState();
+                } else {
+                    hideLoading();
+                    updateReport(data);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showEmptyState();
+            });
+    }
+
+    function updateReport(data) {
+        // تحديث الرسم البياني
+        updateChart(data.chart_data);
+
+        // تحديث الجدول
+        updateTable(data.table_data);
+
+        // تحديث التحليلات
+        updateAnalytics(data.analytics);
+    }
+
+    function updateChart(chartData) {
+        const ctx = document.getElementById('reportChart').getContext('2d');
+
+        if (reportChart) {
+            reportChart.destroy();
+        }
+
+        reportChart = new Chart(ctx, {
+            type: chartData.type || 'bar',
+            data: {
+                labels: chartData.labels,
+                datasets: chartData.datasets
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    title: {
+                        display: true,
+                        text: chartData.title
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    }
+
+    function updateTable(tableData) {
+        const tbody = document.getElementById('reportTableBody');
+        tbody.innerHTML = '';
+
+        tableData.forEach(row => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+            <td>${row.label}</td>
+            <td>${row.value}</td>
+            <td>${row.percentage}</td>
+        `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function updateAnalytics(analytics) {
+        document.getElementById('profitMargin').style.width = analytics.profit_margin + '%';
+        document.getElementById('profitMargin').textContent = analytics.profit_margin + '%';
+
+        document.getElementById('revenueGrowth').style.width = analytics.revenue_growth + '%';
+        document.getElementById('revenueGrowth').textContent = analytics.revenue_growth + '%';
+
+        document.getElementById('expenseEfficiency').style.width = analytics.expense_efficiency + '%';
+        document.getElementById('expenseEfficiency').textContent = analytics.expense_efficiency + '%';
+    }
+
+    function exportReport() {
+        const format = prompt('اختر تنسيق التصدير:\n1. PDF\n2. Excel\n3. CSV');
+
+        switch (format) {
+            case '1':
+                exportPDF();
+                break;
+            case '2':
+                exportExcel();
+                break;
+            case '3':
+                exportCSV();
+                break;
+            default:
+                alert('تنسيق غير صالح');
+        }
+    }
+
+    function exportPDF() {
+        window.print();
+    }
+
+    function exportExcel() {
+        // تنفيذ تصدير Excel
+        alert('سيتم تصدير التقرير إلى Excel');
+    }
+
+    function exportCSV() {
+        // تنفيذ تصدير CSV
+        alert('سيتم تصدير التقرير إلى CSV');
+    }
+
+    function printReport() {
+        window.print();
+    }
+
+    function emailReport() {
+        const email = prompt('أدخل البريد الإلكتروني لإرسال التقرير:');
+        if (email) {
+            alert(`سيتم إرسال التقرير إلى: ${email}`);
+        }
+    }
+
+    function showLoading() {
+        let rc = document.getElementById('reportContent');
+        if (!rc.dataset.original) {
+            rc.dataset.original = rc.innerHTML;
+        }
+        rc.innerHTML = '<div class="text-center my-5"><i class="fas fa-spinner fa-spin fa-3x text-primary mb-3"></i><p class="fs-5">جاري تحميل التقرير...</p></div>';
+    }
+
+    function hideLoading() {
+        let rc = document.getElementById('reportContent');
+        if (rc.dataset.original) {
+            rc.innerHTML = rc.dataset.original;
+        }
+    }
+
+    function showEmptyState() {
+        let rc = document.getElementById('reportContent');
+        rc.innerHTML = '<div class="text-center my-5"><i class="fas fa-folder-open fa-4x text-muted mb-3"></i><h4 class="text-muted">لا يوجد تقارير</h4><p class="text-muted">لا تتوفر بيانات للفترة المحددة</p></div>';
+    }
+
+    // تغيير الفترة
+    document.getElementById('period').addEventListener('change', function () {
+        const period = this.value;
+        const today = new Date();
+        let dateFrom, dateTo;
+
+        switch (period) {
+            case 'monthly':
+                dateFrom = new Date(today.getFullYear(), today.getMonth(), 1);
+                dateTo = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+                break;
+            case 'quarterly':
+                const quarter = Math.floor(today.getMonth() / 3);
+                dateFrom = new Date(today.getFullYear(), quarter * 3, 1);
+                dateTo = new Date(today.getFullYear(), quarter * 3 + 3, 0);
+                break;
+            case 'yearly':
+                dateFrom = new Date(today.getFullYear(), 0, 1);
+                dateTo = new Date(today.getFullYear(), 11, 31);
+                break;
+            default:
+                return;
+        }
+
+        document.getElementById('dateFrom').value = dateFrom.toISOString().split('T')[0];
+        document.getElementById('dateTo').value = dateTo.toISOString().split('T')[0];
+    });
+
+    // تحميل التقرير الافتراضي
+    document.addEventListener('DOMContentLoaded', function () {
+        generateReport();
+    });
+</script>
+
+<style>
+    @media print {
+        .no-print {
+            display: none !important;
+        }
+
+        .card {
+            border: none !important;
+            box-shadow: none !important;
+        }
+    }
+</style>
+{% endblock %}

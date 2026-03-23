@@ -1,0 +1,238 @@
+{% extends "base.html" %}
+
+{% block title %}الموارد البشرية{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-users ms-2"></i>الموارد البشرية</h2>
+                <div>
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addEmployeeModal">
+                        <i class="fas fa-plus ms-2"></i>إضافة موظف
+                    </button>
+                    <button class="btn btn-success ms-2" data-bs-toggle="modal" data-bs-target="#payrollModal">
+                        <i class="fas fa-calculator ms-2"></i>تشغيل الرواتب
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- الإحصائيات -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h5 class="card-title">إجمالي الموظفين</h5>
+                    <h3>{{ employees|length }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h5 class="card-title">نشطون</h5>
+                    <h3>{{ employees|selectattr('status', 'equalto', 'active')|list|length }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <h5 class="card-title">في إجازة</h5>
+                    <h3>{{ employees|selectattr('status', 'equalto', 'on_leave')|list|length }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-danger text-white">
+                <div class="card-body">
+                    <h5 class="card-title">منتهي الخدمة</h5>
+                    <h3>{{ employees|selectattr('status', 'equalto', 'terminated')|list|length }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- قائمة الموظفين -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">قائمة الموظفين</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>الاسم</th>
+                            <th>المنصب</th>
+                            <th>القسم</th>
+                            <th>الراتب</th>
+                            <th>تاريخ التوظيف</th>
+                            <th>الحالة</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for employee in employees %}
+                        <tr>
+                            <td>{{ employee.first_name }} {{ employee.last_name }}</td>
+                            <td>{{ employee.position or '-' }}</td>
+                            <td>{{ employee.department or '-' }}</td>
+                            <td>{{ "{:,.2f}".format(employee.salary) }} {{ company.currency }}</td>
+                            <td>{{ employee.hire_date.strftime('%Y-%m-%d') if employee.hire_date else '-' }}</td>
+                            <td>
+                                {% if employee.status == 'active' %}
+                                    <span class="badge bg-success">نشط</span>
+                                {% elif employee.status == 'on_leave' %}
+                                    <span class="badge bg-warning">في إجازة</span>
+                                {% else %}
+                                    <span class="badge bg-danger">منتهي الخدمة</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-info" onclick="viewEmployee({{ employee.id }})">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="btn btn-sm btn-warning" onclick="editEmployee({{ employee.id }})">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-sm btn-danger" onclick="deleteEmployee({{ employee.id }})">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="7" class="text-center">لا يوجد موظفين</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal إضافة موظف -->
+<div class="modal fade" id="addEmployeeModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">إضافة موظف جديد</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('add_employee') }}">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">الاسم الأول</label>
+                                <input type="text" class="form-control" name="first_name" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">الاسم الأخير</label>
+                                <input type="text" class="form-control" name="last_name" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">البريد الإلكتروني</label>
+                                <input type="email" class="form-control" name="email" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">رقم الهاتف</label>
+                                <input type="tel" class="form-control" name="phone">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">المنصب</label>
+                                <input type="text" class="form-control" name="position">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">القسم</label>
+                                <input type="text" class="form-control" name="department">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">الراتب الأساسي</label>
+                                <input type="number" class="form-control" name="salary" step="0.01" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">تاريخ التوظيف</label>
+                                <input type="date" class="form-control" name="hire_date" required>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="submit" class="btn btn-primary">حفظ</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal تشغيل الرواتب -->
+<div class="modal fade" id="payrollModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">تشغيل الرواتب</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('run_payroll') }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">الشهر</label>
+                        <input type="month" class="form-control" name="payroll_month" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">تاريخ الدفع</label>
+                        <input type="date" class="form-control" name="payment_date" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="submit" class="btn btn-success">تشغيل الرواتب</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function viewEmployee(id) {
+    window.location.href = `/employees/${id}`;
+}
+
+function editEmployee(id) {
+    window.location.href = `/employees/${id}/edit`;
+}
+
+function deleteEmployee(id) {
+    if (confirm('هل أنت متأكد من حذف هذا الموظف؟')) {
+        window.location.href = `/employees/${id}/delete`;
+    }
+}
+</script>
+{% endblock %}

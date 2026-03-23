@@ -1,0 +1,245 @@
+{% extends "base.html" %}
+
+{% block title %}عرض الفاتورة - {{ invoice.invoice_number }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .invoice-view {
+        background: white;
+        border-radius: 15px;
+        padding: 30px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+    }
+
+    .invoice-header {
+        border-bottom: 2px solid #667eea;
+        padding-bottom: 20px;
+        margin-bottom: 30px;
+    }
+
+    .invoice-table {
+        margin-bottom: 30px;
+    }
+
+    .invoice-table th {
+        background: #f8f9fa;
+        border: none;
+        font-weight: bold;
+    }
+
+    .invoice-summary {
+        background: linear-gradient(45deg, #f8f9fa, #e9ecef);
+        border-radius: 10px;
+        padding: 20px;
+    }
+
+    .status-badge {
+        padding: 8px 20px;
+        border-radius: 25px;
+        font-size: 14px;
+        font-weight: bold;
+    }
+
+    .draft {
+        background: #6c757d;
+        color: white;
+    }
+
+    .sent {
+        background: #17a2b8;
+        color: white;
+    }
+
+    .paid {
+        background: #28a745;
+        color: white;
+    }
+
+    .partial {
+        background: #ffc107;
+        color: black;
+    }
+
+    .overdue {
+        background: #dc3545;
+        color: white;
+    }
+
+    .btn-action {
+        border-radius: 20px;
+        padding: 8px 20px;
+        font-weight: bold;
+        transition: all 0.3s ease;
+    }
+
+    .btn-action:hover {
+        transform: translateY(-2px);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2>عرض الفاتورة</h2>
+        <p class="text-muted">تفاصيل الفاتورة {{ invoice.invoice_number }}</p>
+    </div>
+    <div>
+        <a href="{{ url_for('invoices') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-right ms-2"></i>
+            العودة للفواتير
+        </a>
+        <button class="btn btn-primary btn-action ms-2" onclick="window.print()">
+            <i class="fas fa-print ms-2"></i>
+            طباعة
+        </button>
+    </div>
+</div>
+
+<!-- Invoice Details -->
+<div class="invoice-view">
+    <!-- Invoice Header -->
+    <div class="invoice-header">
+        <div class="row">
+            <div class="col-md-6">
+                <h3>{{ company.name }}</h3>
+                <p class="text-muted mb-1">
+                    {{ company.address or '' }}
+                    {% if company.city %}{{ company.city }}{% endif %}
+                </p>
+                <p class="text-muted mb-1">
+                    {{ company.phone or '' }}
+                    {% if company.email %} • {{ company.email }}{% endif %}
+                </p>
+                {% if company.tax_number %}
+                <p class="text-muted mb-0">الرقم الضريبي: {{ company.tax_number }}</p>
+                {% endif %}
+            </div>
+            <div class="col-md-6 text-left">
+                <h2 class="text-primary">فاتورة</h2>
+                <h4>{{ invoice.invoice_number }}</h4>
+                <p class="mb-1"><strong>التاريخ:</strong> {{ invoice.invoice_date.strftime('%Y-%m-%d')
+                    }}</p>
+                {% if invoice.due_date %}
+                <p class="mb-1"><strong>تاريخ الاستحقاق:</strong> {{
+                    invoice.due_date.strftime('%Y-%m-%d') }}</p>
+                {% endif %}
+                <span class="status-badge {{ invoice.status }}">
+                    {{
+                    ('مسودة' if invoice.status == 'draft' else
+                    'مرسلة' if invoice.status == 'sent' else
+                    'مدفوعة' if invoice.status == 'paid' else
+                    'مدفوعة جزئياً' if invoice.status == 'partial' else
+                    'متأخرة')
+                    }}
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Customer Info -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <h5>فاتورة لـ:</h5>
+            <strong>{{ invoice.customer.name }}</strong><br>
+            {% if invoice.customer.address %}{{ invoice.customer.address }}<br>{% endif %}
+            {% if invoice.customer.city %}{{ invoice.customer.city }}{% endif %}
+            {% if invoice.customer.country %}{{ invoice.customer.country }}{% endif %}
+            {% if invoice.customer.phone %}<br>{{ invoice.customer.phone }}{% endif %}
+            {% if invoice.customer.email %}<br>{{ invoice.customer.email }}{% endif %}
+            {% if invoice.customer.tax_number %}<br>الرقم الضريبي: {{ invoice.customer.tax_number }}{%
+            endif %}
+        </div>
+        <div class="col-md-6 text-left">
+            <div class="invoice-summary">
+                <h5>ملخص الدفع</h5>
+                <p class="mb-1"><strong>المجموع الفرعي:</strong> {{ "%.2f"|format(invoice.subtotal) }}
+                    {{ invoice.currency }}</p>
+                <p class="mb-1"><strong>ضريبة القيمة المضافة:</strong> {{
+                    "%.2f"|format(invoice.tax_amount) }} {{ invoice.currency }}</p>
+                {% if invoice.discount_amount > 0 %}
+                <p class="mb-1"><strong>الخصم:</strong> {{ "%.2f"|format(invoice.discount_amount) }} {{
+                    invoice.currency }}</p>
+                {% endif %}
+                <h4 class="text-primary"><strong>الإجمالي:</strong> {{ "%.2f"|format(invoice.total) }}
+                    {{ invoice.currency }}</h4>
+                <p class="mb-1"><strong>المدفوع:</strong> {{ "%.2f"|format(invoice.paid_amount) }} {{
+                    invoice.currency }}</p>
+                <h4 class="text-{{ 'success' if invoice.balance_due <= 0 else 'danger' }}">
+                    <strong>الرصيد المتبقي:</strong> {{ "%.2f"|format(invoice.balance_due) }} {{
+                    invoice.currency }}
+                </h4>
+            </div>
+        </div>
+    </div>
+
+    <!-- Invoice Items -->
+    <div class="invoice-table">
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>الوصف</th>
+                    <th class="text-center">الكمية</th>
+                    <th class="text-center">السعر</th>
+                    <th class="text-center">الضريبة %</th>
+                    <th class="text-end">الإجمالي</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in invoice.items %}
+                <tr>
+                    <td>{{ item.description }}</td>
+                    <td class="text-center">{{ item.quantity }}</td>
+                    <td class="text-center">{{ "%.2f"|format(item.unit_price) }}</td>
+                    <td class="text-center">{{ "%.1f"|format(item.tax_rate) }}%</td>
+                    <td class="text-end">{{ "%.2f"|format(item.total) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Notes -->
+    {% if invoice.notes %}
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h5>ملاحظات:</h5>
+            <p>{{ invoice.notes }}</p>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Action Buttons -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="d-flex gap-2 justify-content-center">
+                {% if invoice.status == 'draft' %}
+                <form method="POST" action="{{ url_for('approve_invoice', id=invoice.id) }}" class="d-inline">
+                    <button type="submit" class="btn btn-success btn-action">
+                        <i class="fas fa-check ms-2"></i>
+                        اعتماد الفاتورة
+                    </button>
+                </form>
+                {% endif %}
+                <button class="btn btn-info btn-action">
+                    <i class="fas fa-envelope ms-2"></i>
+                    إرسال بالبريد
+                </button>
+                <button class="btn btn-warning btn-action">
+                    <i class="fas fa-edit ms-2"></i>
+                    تعديل
+                </button>
+                <button class="btn btn-primary btn-action" onclick="window.print()">
+                    <i class="fas fa-print ms-2"></i>
+                    طباعة
+                </button>
+                <button class="btn btn-danger btn-action">
+                    <i class="fas fa-file-pdf ms-2"></i>
+                    تصدير PDF
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
